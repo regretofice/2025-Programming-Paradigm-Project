@@ -1,0 +1,27 @@
+# ========== 编译产物/构建目录 ==========
+Clash_of_Clans/win32-build/
+Clash_of_Clans/build/
+Clash_of_Clans/proj.win32/Debug/
+Clash_of_Clans/proj.win32/Release/
+Clash_of_Clans/proj.win32/ipch/
+Clash_of_Clans/proj.win32/*.user          # VS用户个性化配置（每个人的VS路径不同）
+Clash_of_Clans/proj.win32/*.suo           # VS解决方案缓存文件
+Clash_of_Clans/proj.win32/*.sdf           # VS智能提示缓存文件
+Clash_of_Clans/proj.win32/*.opensdf       # VS临时缓存
+
+# ========== 系统/IDE临时文件 ==========
+Clash_of_Clans/.DS_Store                  # Mac系统文件
+Clash_of_Clans/Thumbs.db                  # Windows缩略图缓存
+Clash_of_Clans/*.log                      # 日志文件
+Clash_of_Clans/*.tmp                      # 临时文件
+Clash_of_Clans/*.bak                      # 备份文件
+
+# ========== 其他平台工程（非Windows开发忽略） ==========
+Clash_of_Clans/proj.android/
+Clash_of_Clans/proj.linux/
+Clash_of_Clans/proj.ios/
+Clash_of_Clans/proj.mac/
+
+# ========== cocos2d-x内置编译产物（如有） ==========
+Clash_of_Clans/cocos2d/cocos/extensions/build/
+Clash_of_Clans/cocos2d/cocos/core/build/
