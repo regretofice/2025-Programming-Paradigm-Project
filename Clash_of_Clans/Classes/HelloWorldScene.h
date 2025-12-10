@@ -1,30 +1,11 @@
-#ifndef __HELLOWORLD_SCENE_H__
-#define __HELLOWORLD_SCENE_H__
-
+// HelloWorldScene.h 关键代码
 #include "cocos2d.h"
+USING_NS_CC;
 
-class HelloWorld : public cocos2d::Scene {
- public:
-  static cocos2d::Scene* createScene();
-
-  virtual bool init();
-
-  // a selector callback
-  void menuCloseCallback(cocos2d::Ref* pSender);
-
-  // implement the "static create()" method manually
-  // 原本这里是一个宏定义，现在打开了
-  static HelloWorld* create() {
-    HelloWorld* pRet = new (std::nothrow) HelloWorld();
-    if (pRet && pRet->init()) {
-      pRet->autorelease();
-      return pRet;
-    } else {
-      delete pRet;
-      pRet = nullptr;
-      return nullptr;
-    }
-  };
+class HelloWorld : public cocos2d::Layer { // 必须继承Layer
+public:
+    static cocos2d::Scene* createScene();
+    virtual bool init();
+    void menuCloseCallback(cocos2d::Ref* pSender); // 声明回调函数
+    CREATE_FUNC(HelloWorld);
 };
-
-#endif  // __HELLOWORLD_SCENE_H__
