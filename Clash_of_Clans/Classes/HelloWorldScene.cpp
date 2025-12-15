@@ -5,67 +5,59 @@
 
 #include "HelloWorldScene.h"
 #include "PlayerDataManager.h"
-#include "cocos2d.h"
 USING_NS_CC;
 
-Scene* HelloWorld::createScene() {
-	auto scene = Scene::create();
-	auto layer = HelloWorld::create();
-	scene->addChild(layer);
-	return scene;
-}
 
-static void problemLoading(const char* filename) {
-	printf("Error while loading: %s\n", filename);
-	printf(
-		"Depending on how you compiled you might have to add 'Resources/' in "
-		"front of filenames in HelloWorldScene.cpp\n");
-}
 
+Scene* HelloWorld::createScene() { return HelloWorld::create(); }
+
+
+// on "init" you need to initialize your instance
 bool HelloWorld::init() {
-	if (!Layer::init()) {
-		return false;
-	}
+  //////////////////////////////
+  // 1. super init first
+  if (!Scene::init()) {
+    return false;
+  }
 
-	auto visibleSize = Director::getInstance()->getVisibleSize();
-	Vec2 origin = Director::getInstance()->getVisibleOrigin();
+  auto visibleSize = Director::getInstance()->getVisibleSize();
+  Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-	// 地图加载：
-	auto tmxMap = TMXTiledMap::create("map1.tmx");
-	if (!tmxMap) return false;
+  auto PlayerData = PlayerDataManager::getInstance();
 
-	float scale = 1.35f; // 放大倍数
-	tmxMap->setScale(scale);
+  // 读取当前金币/水晶（程序启动时自动加载上次保存的值）
 
-	Size mapSize = tmxMap->getContentSize();
-	// 居中：
-	tmxMap->setPosition(
-		visibleSize.width / 2 - mapSize.width * scale / 2,
-		visibleSize.height / 2 - mapSize.height * scale / 2
-	);
+  int currentGold = PlayerData->getGold();
+  int currentElixir = PlayerData->getElixir();
+  int currentBuilder = PlayerData->getBuilder();
+  CCLOG("当前金币：%d,当前圣水：%d,当前建筑工人", currentGold, currentElixir,
+        currentBuilder);
+  // PlayerData->resetAllData();
+  //  修改金币（+50）
+  PlayerData->setGold(currentGold + 50);
+  // 修改圣水（+20）
+  // PlayerData->setElixir(currentElixir + 20);
 
-	this->addChild(tmxMap, 1);
+  // PlayerData->resetAllData();
+  //    显示金币
+  auto goldLabel = Label::createWithSystemFont(
+      "圣水：" + std::to_string(PlayerData->getElixir()), "Microsoft YaHei",
+      50);
+  goldLabel->setPosition(visibleSize.width / 2, visibleSize.height - 50);
+  goldLabel->setTextColor(Color4B::YELLOW);
+  this->addChild(goldLabel, 10);
 
-	// 玩家数据
-	auto PlayerData = PlayerDataManager::getInstance();
-	int currentGold = PlayerData->getGold();
-	int currentElixir = PlayerData->getElixir();
-	int currentBuilder = PlayerData->getBuilder();
-	CCLOG("当前金币：%d,当前圣水：%d,当前建筑工人：%d", currentGold, currentElixir, currentBuilder);
+  this->schedule(
+      [=](float dt) {
+        int currentElixir_ = PlayerDataManager::getInstance()->getElixir();
+        goldLabel->setString("圣水：" + std::to_string(currentElixir_));
+        CCLOG("UI定时器触发，当前圣水：%d", currentElixir_);  // 新增日志
+      },
+      0.5f, "elixirUpdate");
 
-	PlayerData->setGold(currentGold + 50);
-	PlayerData->setElixir(currentElixir + 20);
-	PlayerData->resetAllData();
-
-	auto goldLabel = Label::createWithSystemFont(
-		"金币：" + std::to_string(PlayerData->getGold()), "Microsoft YaHei", 50);
-	goldLabel->setPosition(visibleSize.width / 2, visibleSize.height - 50);
-	goldLabel->setTextColor(Color4B::YELLOW);
-	this->addChild(goldLabel, 2);
-
-	return true;
+  return true;
 }
 
 void HelloWorld::menuCloseCallback(Ref* pSender) {
-	Director::getInstance()->end();
+  Director::getInstance()->end();
 }
