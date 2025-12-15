@@ -1,106 +1,102 @@
-#include <memory>
+ï»¿#include <memory>
 #include <vector>
 
 #include "cocos2d.h"
 USING_NS_CC;
-// Ê¿±ø×´Ì¬£¨ÓÃÓÚ½ç¶¨µ±Ç°×´Ì¬£©
+// å£«å…µçŠ¶æ€ï¼ˆç”¨äºç•Œå®šå½“å‰çŠ¶æ€ï¼‰
 enum class SoldierState {
-  kIdle,    // Õ¾Á¢/ĞüÍ£
-  kMove,    // ÒÆ¶¯/·ÉĞĞ
-  kAttack,  // ¹¥»÷
-  kDie      // ËÀÍö
+  kIdle,    // ç«™ç«‹/æ‚¬åœ
+  kMove,    // ç§»åŠ¨/é£è¡Œ
+  kAttack,  // æ”»å‡»
+  kDie      // æ­»äº¡
 };
-// Ê¿±øÀàĞÍ£¨ÓÃÓÚÇø·ÖÌì¿Õ/µØÃæ+Ö°Òµ£©
+// å£«å…µç±»å‹ï¼ˆç”¨äºåŒºåˆ†å¤©ç©º/åœ°é¢+èŒä¸šï¼‰
 enum class SoldierType {
-  kGroundRarbarian,   // µØÃæ-Ò°ÂùÈË
-  kGroundGiant,       // µØÃæ-¾ŞÈË
-  kGroundBomberman,   // µØÃæ-Õ¨µ¯ÈË
-  kGroundArcher,      // µØÃæ-¹­¼ıÊÖ
-  kAirThunderDragon,  // Ìì¿Õ-À×µç·ÉÁú
-  kAirBallonSoldier   // Ìì¿Õ-ÆøÇò±ø
+  kGroundRarbarian,   // åœ°é¢-é‡è›®äºº
+  kGroundGiant,       // åœ°é¢-å·¨äºº
+  kGroundBomberman,   // åœ°é¢-ç‚¸å¼¹äºº
+  kGroundArcher,      // åœ°é¢-å¼“ç®­æ‰‹
+  kAirThunderDragon,  // å¤©ç©º-é›·ç”µé£é¾™
+  kAirBallonSoldier   // å¤©ç©º-æ°”çƒå…µ
 };
 class Soldier : public Sprite {
  public:
   ///////////////////
-  // Í¨ÓÃÊôĞÔ²Ù×÷ÊôĞÔ²Ù×÷
+  // é€šç”¨å±æ€§æ“ä½œå±æ€§æ“ä½œ
 
-  // ÊÜµ½ÉËº¦£¬ÊıÖµÎªdamage
+  // å—åˆ°ä¼¤å®³ï¼Œæ•°å€¼ä¸ºdamage
   void getDamage(int damage);
-  // ·µ»Øµ±Ç°ÑªÁ¿
+  // è¿”å›å½“å‰è¡€é‡
   int getHp() const { return hp_; }
-  // ·µ»Øµ±Ç°¹¥»÷Á¦
+  // è¿”å›å½“å‰æ”»å‡»åŠ›
   int getAttack() const { return attack_; }
-  // ·µ»Øµ±Ç°ÊÇ·ñËÀÍö
+  // è¿”å›å½“å‰æ˜¯å¦æ­»äº¡
   bool isDead() const { return hp_ <= 0; }
-  // ´¿Ğéº¯Êı£º»ñÈ¡Ê¿±øÀàĞÍ
+  // çº¯è™šå‡½æ•°ï¼šè·å–å£«å…µç±»å‹
   virtual SoldierType getSoldierType() const = 0;
 
   ////////////////
-  // ×´Ì¬»úÏà¹Ø²Ù×÷
+  // çŠ¶æ€æœºç›¸å…³æ“ä½œ
 
-  // ±ä¸üÎªĞÂ×´Ì¬
+  // å˜æ›´ä¸ºæ–°çŠ¶æ€
   void changeState(SoldierState newState);
-  // ·µ»Øµ±Ç°×´Ì¬
+  // è¿”å›å½“å‰çŠ¶æ€
   SoldierState getCurrentState() { return current_state_; }
 
   ////////////
-  // ĞĞÎª½Ó¿Ú
+  // è¡Œä¸ºæ¥å£
 
-  // ÒÆ¶¯µ½¶ÔÓ¦Î»ÖÃ
+  // ç§»åŠ¨åˆ°å¯¹åº”ä½ç½®
   virtual void moveTo(const Vec2& targetPos, int speed);
-  // ¹¥»÷½¨Öş
+  // æ”»å‡»å»ºç­‘
   // void attackBuildings(const Building& building);
 
-  // ¹¥»÷Ê¿±ø
+  // æ”»å‡»å£«å…µ
   virtual void attackSoldier(Soldier* target);
 
   //////////
-  // ¶¯»­Ïà¹Ø½Ó¿Ú
-  // ¼ÓÔØËùÓĞ¶¯»­×ÊÔ´£¨Ö»ĞèÈ«¾Ö¼ÓÔØÒ»´Î£©£¨´¿Ğéº¯Êı£¬×ÓÀàÖĞÊµÏÖ£©
+  // åŠ¨ç”»ç›¸å…³æ¥å£
+  // åŠ è½½æ‰€æœ‰åŠ¨ç”»èµ„æºï¼ˆåªéœ€å…¨å±€åŠ è½½ä¸€æ¬¡ï¼‰ï¼ˆçº¯è™šå‡½æ•°ï¼Œå­ç±»ä¸­å®ç°ï¼‰
   virtual void loadAllAnimations() = 0;
 
-  // Ô¤ÀÀÄ£Ê½£¨½µµÍÍ¸Ã÷¶È£©
+  // é¢„è§ˆæ¨¡å¼ï¼ˆé™ä½é€æ˜åº¦ï¼‰
   void setPreviewMode(bool isPreview);
 
-  // ¹¥»÷ÀäÈ´¿ØÖÆ,µ÷¶ÈÆ÷Ïà¹Ø
-  // ÆôÓÃ/½ûÓÃ¹¥»÷ÀäÈ´¼ì²â
+  // æ”»å‡»å†·å´æ§åˆ¶,è°ƒåº¦å™¨ç›¸å…³
+  // å¯ç”¨/ç¦ç”¨æ”»å‡»å†·å´æ£€æµ‹
   void enableAttackCD(bool enable);
 
  protected:
   Soldier() = default;
   ~Soldier() = default;
 
-  // Ê¿±øÊıÖµµÄ³õÊ¼»¯
+  // å£«å…µæ•°å€¼çš„åˆå§‹åŒ–
   bool init(int hp, int attack, int attack_range, int attack_CD);
 
-  // ¸÷×´Ì¬µÄ¶¯»­²¥·ÅÂß¼­£¨´¿Ğéº¯Êı£¬ĞèÒªÔÚ×ÓÀàÖĞÊµÏÖ£©
+  // å„çŠ¶æ€çš„åŠ¨ç”»æ’­æ”¾é€»è¾‘ï¼ˆçº¯è™šå‡½æ•°ï¼Œéœ€è¦åœ¨å­ç±»ä¸­å®ç°ï¼‰
   virtual void playIdleAnimation() = 0;
   virtual void playMoveAnimation() = 0;
   virtual void playAttackAnimation() = 0;
   virtual void playDieAnimation() = 0;
 
-  // Í£Ö¹µ±Ç°ËùÓĞ¶¯»­ºÍ¶¯×÷
+  // åœæ­¢å½“å‰æ‰€æœ‰åŠ¨ç”»å’ŒåŠ¨ä½œ
   void stopAllStateActions() { stopAllActions(); };
 
-  // ¹¥»÷ÀäÈ´¸üĞÂ,Ã¿Ö¡±»µ÷¶ÈÆ÷µ÷ÓÃ
-  // deltaTimeÎªÖ¡¼ä¸ôÊ±¼ä
-  void updateAttackCD(float deltaTime);
-
  private:
-  int hp_;                      // Ê¿±øÑªÁ¿
-  int attack_;                  // Ê¿±ø¹¥»÷
-  int attack_range_;            // Ê¿±ø¹¥»÷·¶Î§
-  SoldierState current_state_;  // Ê¿±øµ±Ç°×´Ì¬
-  float attack_CD_ = 1.0f;      // ¹¥»÷ÀäÈ´×ÜÊ±³¤£¨Ãë£©
+  int hp_;                      // å£«å…µè¡€é‡
+  int attack_;                  // å£«å…µæ”»å‡»
+  int attack_range_;            // å£«å…µæ”»å‡»èŒƒå›´
+  SoldierState current_state_;  // å£«å…µå½“å‰çŠ¶æ€
+  float attack_CD_ = 1.0f;      // æ”»å‡»å†·å´æ€»æ—¶é•¿ï¼ˆç§’ï¼‰
 
-  // ¹¥»÷ÀäÈ´Ïà¹Ø
-  bool is_attack_CD_ready_;    // ÀäÈ´ÊÇ·ñ¾ÍĞ÷
-  float attack_CD_remaining_;  // Ê£ÓàÀäÈ´Ê±¼ä
+  // æ”»å‡»å†·å´ç›¸å…³
+  bool is_attack_CD_ready_;    // å†·å´æ˜¯å¦å°±ç»ª
+  float attack_CD_remaining_;  // å‰©ä½™å†·å´æ—¶é—´
 
-  // Ô¤ÀÀÄ£Ê½Ïà¹Ø
+  // é¢„è§ˆæ¨¡å¼ç›¸å…³
   float original_opacity_;
   bool is_preview_;
 
-  // µ÷¶ÈÆ÷key£¨Î¨Ò»±êÊ¶£¬ÓÃÓÚ¾«×¼È¡Ïû£©
+  // è°ƒåº¦å™¨keyï¼ˆå”¯ä¸€æ ‡è¯†ï¼Œç”¨äºç²¾å‡†å–æ¶ˆï¼‰
   const std::string kAttackCDSchedulerKey = "attackCD";
 };

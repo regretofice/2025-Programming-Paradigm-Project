@@ -1,11 +1,11 @@
-#include "Soldier.h"
+ï»¿#include "Soldier.h"
 
 bool Soldier::init(int hp, int attack, int attack_range, int attack_CD) {
   if (!Sprite::init()) {
     return false;
   }
 
-  // ³õÊ¼»¯ºËĞÄÊôĞÔ
+  // åˆå§‹åŒ–æ ¸å¿ƒå±æ€§
   hp_ = hp;
   attack_ = attack;
   attack_range_ = attack_range;
@@ -16,26 +16,26 @@ bool Soldier::init(int hp, int attack, int attack_range, int attack_CD) {
   original_opacity_ = 255;
   is_preview_ = false;
 
-  // ³õÊ¼»¯Ê±ÆôÓÃ¹¥»÷ÀäÈ´¼ì²â£¨°ó¶¨µ÷¶ÈÆ÷£©
+  // åˆå§‹åŒ–æ—¶å¯ç”¨æ”»å‡»å†·å´æ£€æµ‹ï¼ˆç»‘å®šè°ƒåº¦å™¨ï¼‰
   enableAttackCD(true);
   return true;
 }
 
 void Soldier::getDamage(int damage) {
-  if (isDead()) return;  // ËÀÍöÁË¾Í²»¼ÆËãÉËº¦
+  if (isDead()) return;  // æ­»äº¡äº†å°±ä¸è®¡ç®—ä¼¤å®³
 
   hp_ -= damage;
   if (hp_ <= 0) {
     hp_ = 0;
-    enableAttackCD(false);            // ËÀÍöºó½ûÓÃÀäÈ´¼ì²â
-    changeState(SoldierState::kDie);  // ÇĞ»»ÎªËÀÍö×´Ì¬
+    enableAttackCD(false);            // æ­»äº¡åç¦ç”¨å†·å´æ£€æµ‹
+    changeState(SoldierState::kDie);  // åˆ‡æ¢ä¸ºæ­»äº¡çŠ¶æ€
   }
 }
 
 void Soldier::changeState(SoldierState newState) {
-  if (current_state_ == newState) return;  // ×´Ì¬Ò»ÖÂ£¬ÎŞĞè²Ù×÷
+  if (current_state_ == newState) return;  // çŠ¶æ€ä¸€è‡´ï¼Œæ— éœ€æ“ä½œ
 
-  if (current_state_ == SoldierState::kDie) return;  // ËÀÁËÒ²²»²Ù×÷
+  if (current_state_ == SoldierState::kDie) return;  // æ­»äº†ä¹Ÿä¸æ“ä½œ
 
   stopAllStateActions();
 
@@ -61,36 +61,36 @@ void Soldier::changeState(SoldierState newState) {
   }
 }
 void Soldier::moveTo(const Vec2& targetPos, int speed) {
-  // ËÀÍö×´Ì¬²»¿ÉÒÆ¶¯
+  // æ­»äº¡çŠ¶æ€ä¸å¯ç§»åŠ¨
   if (isDead()) return;
 
-  // ÇĞ»»µ½ÒÆ¶¯×´Ì¬
+  // åˆ‡æ¢åˆ°ç§»åŠ¨çŠ¶æ€
   changeState(SoldierState::kMove);
 
-  // ¼ÆËãÒÆ¶¯Ê±¼ä
+  // è®¡ç®—ç§»åŠ¨æ—¶é—´
   float distance = getPosition().distance(targetPos);
   float moveTime = distance / speed;
 
-  // ´´½¨ÒÆ¶¯¶¯×÷
+  // åˆ›å»ºç§»åŠ¨åŠ¨ä½œ
   MoveTo* moveAction = MoveTo::create(moveTime, targetPos);
-  // ÒÆ¶¯Íê³ÉºóÇĞ»»»ØÕ¾Á¢×´Ì¬
+  // ç§»åŠ¨å®Œæˆååˆ‡æ¢å›ç«™ç«‹çŠ¶æ€
   CallFunc* moveEndCallBack =
       CallFunc::create([=]() { changeState(SoldierState::kIdle); });
 
   runAction(Sequence::create(moveAction, moveEndCallBack, nullptr));
 }
 void Soldier::attackSoldier(Soldier* target) {
-  // ÅĞ¶Ï²»¹¥»÷»òÕß¹¥»÷´¦ÓÚÀäÈ´µÄÇé¿ö
+  // åˆ¤æ–­ä¸æ”»å‡»æˆ–è€…æ”»å‡»å¤„äºå†·å´çš„æƒ…å†µ
   if (!target || isDead() || target->isDead() || !is_attack_CD_ready_) return;
 
-  // ½øÈë¹¥»÷ÀäÈ´×´Ì¬
+  // è¿›å…¥æ”»å‡»å†·å´çŠ¶æ€
   is_attack_CD_ready_ = false;
   attack_CD_remaining_ = attack_CD_;
   changeState(SoldierState::kAttack);
   CallFunc* attackHitCallBack = CallFunc::create([=]() {
     if (target && !target->isDead()) {
       target->getDamage(attack_);
-      log("¶ÔÄ¿±êÔì³É%.1fÉËº¦", attack_);
+      log("å¯¹ç›®æ ‡é€ æˆ%.1fä¼¤å®³", attack_);
     }
     changeState(SoldierState::kIdle);
   });
@@ -103,38 +103,36 @@ void Soldier::setPreviewMode(bool isPreview) {
     original_opacity_ = getOpacity();
     setOpacity(100);
     stopAllStateActions();
-    enableAttackCD(false);  // Ô¤ÀÀ×´Ì¬ÏÂ²»½øĞĞ¹¥»÷
+    enableAttackCD(false);  // é¢„è§ˆçŠ¶æ€ä¸‹ä¸è¿›è¡Œæ”»å‡»
   } else {
     setOpacity(original_opacity_);
-    enableAttackCD(true);  // ÍË³öÔ¤ÀÀÆôÓÃÀäÈ´
+    enableAttackCD(true);  // é€€å‡ºé¢„è§ˆå¯ç”¨å†·å´
     changeState(SoldierState::kIdle);
   }
 }
 void Soldier::enableAttackCD(bool enable) {
   if (enable) {
     this->schedule(
-        std::bind(&Soldier::updateAttackCD, this, std::placeholders::_1),
-        // »Øµ÷º¯Êı
-        0.0f,               // ¶¨Ê±Æ÷Ö´ĞĞ¼ä¸ô£¬Ã¿Ö¡¼ì²â
-        CC_REPEAT_FOREVER,  // ¶¨Ê±Æ÷ÖØ¸´Ö´ĞĞ´ÎÊı
-        0.0f,               // ¶¨Ê±Æ÷ÑÓ³ÙÖ´ĞĞÊ±¼ä£¨µ¥Î»£ºÃë£©
+        [=](float dt) {
+          if (!is_attack_CD_ready_ && attack_CD_remaining_ > 0) {
+            // å‡å°‘å‰©ä½™å†·å´
+            attack_CD_remaining_ -= dt;
+
+            if (attack_CD_remaining_ <= 0) {
+              is_attack_CD_ready_ = true;
+              attack_CD_remaining_ = 0.0;
+              CCLOG("å½“å‰å£«å…µæ”»å‡»å†·å´ç»“æŸ");
+            }
+          }
+        },
+        // å®šæ—¶å™¨å›è°ƒå‡½æ•°,ç›´æ¥ä½¿ç”¨lambdaè¡¨è¾¾å¼ï¼Œè¯·å‹¿ä½¿ç”¨bind,ä¼šå¯¼è‡´unscheduleæ— æ•ˆ
+        0.0f,               // å®šæ—¶å™¨æ‰§è¡Œé—´éš”ï¼Œæ¯å¸§æ£€æµ‹
+        CC_REPEAT_FOREVER,  // å®šæ—¶å™¨é‡å¤æ‰§è¡Œæ¬¡æ•°
+        0.0f,               // å®šæ—¶å™¨å»¶è¿Ÿæ‰§è¡Œæ—¶é—´ï¼ˆå•ä½ï¼šç§’ï¼‰
         kAttackCDSchedulerKey);
-    CCLOG("¹¥»÷ÀäÈ´¼ì²âÒÑÆôÓÃ");
+    CCLOG("æ”»å‡»å†·å´æ£€æµ‹å·²å¯ç”¨");
   } else {
     this->unschedule(kAttackCDSchedulerKey);
-    CCLOG("¹¥»÷ÀäÈ´¼ì²âÒÑ½ûÓÃ");
-  }
-}
-
-void Soldier::updateAttackCD(float deltaTime) {
-  if (!is_attack_CD_ready_ && attack_CD_remaining_ > 0) {
-    // ¼õÉÙÊ£ÓàÀäÈ´
-    attack_CD_remaining_ -= deltaTime;
-
-    if (attack_CD_remaining_ <= 0) {
-      is_attack_CD_ready_ = true;
-      attack_CD_remaining_ = 0.0;
-      CCLOG("µ±Ç°Ê¿±ø¹¥»÷ÀäÈ´½áÊø");
-    }
+    CCLOG("æ”»å‡»å†·å´æ£€æµ‹å·²ç¦ç”¨");
   }
 }
