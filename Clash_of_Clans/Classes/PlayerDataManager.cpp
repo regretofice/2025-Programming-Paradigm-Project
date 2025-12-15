@@ -32,8 +32,8 @@ PDM::PlayerDataManager() {
   // 加载本地数据到内存
   initData();
 
-  // 启动在线时的定时器（每分钟增长圣水）
-  startOnlineElixirTimer();
+  // 启动在线时的定时器（每分钟增长资源）
+  startOnlineTimer();
 }
 
 // 析构时无需手动销毁_userDefault（引擎管理）
@@ -96,6 +96,15 @@ void PDM::setGoldLimit(int limit) {
   syncGoldLimitToLocal();
   CCLOG("金币上限已更新为：%d", gold_limit_);
 }
+void PDM::setGoldGrowthRate(int rate) {
+  if (rate < 0) {
+    rate = 1;
+  }
+  gold_growth_rate = rate;
+  syncGoldGrowRateToLocal();
+  CCLOG("金币增长速率已更新为：%d", rate);
+}
+
 void PDM::setElixir(int elixir) {
   if (elixir < 0 || elixir > elixir_limit_) {
     CCLOG("警告：圣水输入值异常（%d），即将被修正", elixir);
@@ -117,6 +126,14 @@ void PDM::setElixirLimit(int limit) {
   syncElixirLimitToLocal();
   CCLOG("圣水上限已更新为：%d", elixir_limit_);
 }
+void PDM::setElixirGrowthRate(int rate) {
+  if (rate < 0) {
+    rate = 1;
+  }
+  elixir_growth_rate = rate;
+  syncElixirGrowRateToLocal();
+  CCLOG("圣水增长速率已更新为：%d", rate);
+}
 void PDM::setBuilder(int builder) {
   if (builder < 0) {
     builder = 0;
@@ -135,7 +152,14 @@ void PDM::setBuilderLimit(int limit) {
   syncBuilderLimitToLocal();
   CCLOG("建筑工人上限已更新为：%d", builder_limit_);
 }
-
+void PDM::setBuilderGrowthRate(int rate) {
+  if (rate < 0) {
+    rate = 1;
+  }
+  builder_growth_rate = rate;
+  syncBuilderGrowRateToLocal();
+  CCLOG("建筑工人增长速率已更新为：%d", rate);
+}
 // 每次更新完数据之后要调用flush来保存数据，否则会丢失
 void PDM::syncGoldToLocal() {
   userDefault_->setIntegerForKey(kKeyGold.c_str(), gold_);
@@ -143,6 +167,10 @@ void PDM::syncGoldToLocal() {
 }
 void PDM::syncGoldLimitToLocal() {
   userDefault_->setIntegerForKey(kKeyGoldLimit.c_str(), gold_limit_);
+  userDefault_->flush();
+}
+void PDM::syncGoldGrowRateToLocal() {
+  userDefault_->setIntegerForKey(kKeyGoldGrowthRate.c_str(), gold_growth_rate);
   userDefault_->flush();
 }
 void PDM::syncElixirToLocal() {
@@ -153,12 +181,22 @@ void PDM::syncElixirLimitToLocal() {
   userDefault_->setIntegerForKey(kKeyElixirLimit.c_str(), elixir_limit_);
   userDefault_->flush();
 }
+void PDM::syncElixirGrowRateToLocal() {
+  userDefault_->setIntegerForKey(kKeyElixirGrowthRate.c_str(),
+                                 elixir_growth_rate);
+  userDefault_->flush();
+}
 void PDM::syncBuilderToLocal() {
   userDefault_->setIntegerForKey(kKeyBuilder.c_str(), builder_);
   userDefault_->flush();
 }
 void PDM::syncBuilderLimitToLocal() {
   userDefault_->setIntegerForKey(kKeyBuilderLimit.c_str(), builder_limit_);
+  userDefault_->flush();
+}
+void PDM::syncBuilderGrowRateToLocal() {
+  userDefault_->setIntegerForKey(kKeyBuilderGrowthRate.c_str(),
+                                 builder_growth_rate);
   userDefault_->flush();
 }
 void PDM::syncTimeToLocal() {
@@ -185,36 +223,36 @@ void PDM::resetAllData() {
   CCLOG("玩家数据已重置");
 }
 
-void PDM::updateOnlineElixir(float dt) {
-  setElixir(elixir_ + kElixirGrowthRate);
-  lastRecordTime_ = TimeTools::getCurrentTimeMs();
-  syncTimeToLocal();
-  CCLOG("圣水增长，当前值：%d", elixir_);  // 新增日志
-}
 // 圣水在线增长
-void PDM::startOnlineElixirTimer() {
+void PDM::startOnlineTimer() {
   scheduler_ = cocos2d::Director::getInstance()->getScheduler();
   if (!scheduler_) {
     CCLOG("错误：获取Scheduler失败！");  // 可添加此日志排查
     return;
   }
   // 先取消同名定时器，避免重复调度
-  scheduler_->unschedule("elixir_growth_timer", this);
+  scheduler_->unschedule("growth_timer", this);
 
   // 注册定时器
   scheduler_->schedule(
-      std::bind(&PlayerDataManager::updateOnlineElixir, this,
-                std::placeholders::_1),
-      // 定时器回调函数（std::bind绑定后的可调用对象）
-      this,                  // 定时器关联的目标对象（PDM单例实例）
-      1.0f,                  // 定时器执行间隔（单位：秒）
-      CC_REPEAT_FOREVER,     // 定时器重复执行次数
-      0.0f,                  // 定时器延迟执行时间（单位：秒）
-      false,                 // 定时器是否初始暂停
-      "elixir_growth_timer"  // 定时器唯一标签（用于后续取消/查找）
+      [=](float dt) {
+        setGold(gold_ + gold_growth_rate);
+        setElixir(elixir_ + elixir_growth_rate);
+        setBuilder(builder_ + builder_growth_rate);
+        lastRecordTime_ = TimeTools::getCurrentTimeMs();
+        syncTimeToLocal();
+        CCLOG("资源增长，当前金币：%d，圣水：%d，建筑工人：%d", gold_, elixir_,
+              builder_);  // 新增日志
+      },
+      // 定时器回调函数,直接使用lambda表达式，请勿使用bind
+      this,               // 定时器关联的目标对象（PDM单例实例）
+      1.0f,               // 定时器执行间隔（单位：秒）
+      CC_REPEAT_FOREVER,  // 定时器重复执行次数
+      0.0f,               // 定时器延迟执行时间（单位：秒）
+      false,              // 定时器是否初始暂停
+      "growth_timer"      // 定时器唯一标签（用于后续取消/查找）
   );
-
-  CCLOG("startOnlineElixirTimer：圣水增长定时器已启动");  // 新增日志
+  CCLOG("startOnlineTimer：资源增长定时器已启动");  // 新增日志
 
   ////////////////
   ////调用时请在Scene加入如下语句
