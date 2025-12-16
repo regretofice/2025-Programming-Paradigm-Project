@@ -21,7 +21,7 @@ bool Soldier::init(int hp, int attack, int attack_range, int attack_CD) {
   return true;
 }
 
-void Soldier::getDamage(int damage) {
+void Soldier::takeDamage(int damage) {
   if (isDead()) return;  // 死亡了就不计算伤害
 
   hp_ -= damage;
@@ -89,8 +89,8 @@ void Soldier::attackSoldier(Soldier* target) {
   changeState(SoldierState::kAttack);
   CallFunc* attackHitCallBack = CallFunc::create([=]() {
     if (target && !target->isDead()) {
-      target->getDamage(attack_);
-      log("对目标造成%.1f伤害", attack_);
+      target->takeDamage(attack_);
+      CCLOG("对目标造成%.1f伤害", attack_);
     }
     changeState(SoldierState::kIdle);
   });

@@ -25,7 +25,7 @@ class Soldier : public Sprite {
   // 通用属性操作属性操作
 
   // 受到伤害，数值为damage
-  void getDamage(int damage);
+  void takeDamage(int damage);
   // 返回当前血量
   int getHp() const { return hp_; }
   // 返回当前攻击力
