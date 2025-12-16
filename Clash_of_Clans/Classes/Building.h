@@ -1,0 +1,66 @@
+#ifndef BUILDING_H
+#define BUILDING_H
+
+#include "cocos2d.h"
+#include "BuildingEnums.h"
+#include <string>
+
+USING_NS_CC;
+
+class Building : public Sprite {
+protected:
+    // 通用属性
+    int _level;                  // 等级
+    int _maxLevel;               // 最高等级
+    int _maxHP;                  // 最大血量
+    int _currentHP;              // 当前血量
+    float _size;                 // 边长（建筑大小）
+    CampType _camp;                  // 阵营归属
+    BuildingType _type;          // 建筑类型
+    bool _isDestroyed;           // 是否被摧毁
+    int _upgradeCost;            // 升级所需资源
+    float _upgradeTime;          // 升级时间（秒）
+    std::string _name;           // 建筑名称
+
+public:
+    // Cocos2d风格创建函数（内存自动管理）
+    static Building* create(const std::string& texPath, const std::string& name,
+        CampType camp, int level, int maxLevel, int maxHP, float size,
+        int upgradeCost, float upgradeTime, BuildingType type);
+
+    // 初始化函数
+    virtual bool init(const std::string& texPath, const std::string& name,
+        CampType camp, int level, int maxLevel, int maxHP, float size,
+        int upgradeCost, float upgradeTime, BuildingType type);
+
+    // 通用方法
+    virtual void takeDamage(int damage);  // 受攻击
+    virtual bool upgrade();               // 升级（返回是否成功）
+    virtual void checkDestroyed();        // 检查是否被摧毁
+    virtual void update(float dt) override; // 每帧更新（虚函数，子类重写）
+
+    // Getter/Setter
+    int getLevel() const {
+        return _level; 
+    }
+    int getCurrentHP() const {
+        return _currentHP;
+    }
+    CampType getCamp() const {
+        return _camp; 
+    }
+    bool isDestroyed() const {
+        return _isDestroyed;
+    } 
+    const std::string& getName() const override {
+        return _name;
+    }
+
+    // 析构函数
+    virtual ~Building();
+};
+
+
+
+
+#endif
