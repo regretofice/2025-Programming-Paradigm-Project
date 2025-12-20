@@ -1,10 +1,11 @@
 ﻿#include "Soldier.h"
 
+#include "PlacementManager.h"
 bool Soldier::init(int hp, int attack, int attack_range, int attack_CD) {
-  if (!Sprite::init()) {
-    return false;
-  }
-
+  // if (!Sprite::init()) {
+  //   return false;
+  // }
+  if (!Sprite::initWithFile("rarbarian_idle_01.png")) return false;
   // 初始化核心属性
   hp_ = hp;
   attack_ = attack;
@@ -16,8 +17,11 @@ bool Soldier::init(int hp, int attack, int attack_range, int attack_CD) {
   original_opacity_ = 255;
   is_preview_ = false;
 
+  loadAllAnimations();
   // 初始化时启用攻击冷却检测（绑定调度器）
   enableAttackCD(true);
+  //  确保ActionManager可用
+  scheduleUpdate();
   return true;
 }
 
@@ -29,6 +33,12 @@ void Soldier::takeDamage(int damage) {
     hp_ = 0;
     enableAttackCD(false);            // 死亡后禁用冷却检测
     changeState(SoldierState::kDie);  // 切换为死亡状态
+
+    // 延迟回收到对象池
+    auto delay = DelayTime::create(2.0f);
+    auto callback = CallFunc::create(
+        [this]() { PlacementManager::getInstance()->removeSoldier(this); });
+    runAction(Sequence::create(delay, callback, nullptr));
   }
 }
 
@@ -134,5 +144,105 @@ void Soldier::enableAttackCD(bool enable) {
   } else {
     this->unschedule(kAttackCDSchedulerKey);
     CCLOG("攻击冷却检测已禁用");
+  }
+}
+void Soldier::attackBuilding(Building* target) {
+  if (!target || isDead() || target->isDestroyed() || !is_attack_CD_ready_)
+    return;
+
+  // 进入攻击冷却
+  is_attack_CD_ready_ = false;
+  attack_CD_remaining_ = attack_CD_;
+  changeState(SoldierState::kAttack);
+
+  CallFunc* attackHitCallBack = CallFunc::create([=]() {
+    if (target && !target->isDestroyed()) {
+      target->takeDamage(attack_);
+      CCLOG("对建筑造成%d伤害", attack_);
+
+      // 如果建筑被摧毁，回到 idle 状态
+      if (target->isDestroyed()) {
+        setTargetBuilding(nullptr);
+        changeState(SoldierState::kIdle);
+      }
+    }
+  });
+
+  runAction(
+      Sequence::create(DelayTime::create(0.5f), attackHitCallBack, nullptr));
+}
+
+void Soldier::calculatePath(const Vec2& targetPos) {
+  // 简单的直线路径（实际项目中应替换为A*等寻路算法）
+  path_points_.clear();
+  current_path_index_ = 0;
+
+  // 添加起点和终点
+  path_points_.push_back(getPosition());
+  path_points_.push_back(targetPos);
+}
+
+void Soldier::startAutoAttack(Building* target) {
+  if (!target || target->isDestroyed()) return;
+
+  setTargetBuilding(target);
+  calculatePath(target->getPosition());
+  current_path_index_ = 0;
+
+  // 开始移动到第一个路径点
+  if (!path_points_.empty()) {
+    moveToNextPathPoint();
+  }
+}
+
+// 新增：移动到下一个路径点
+void Soldier::moveToNextPathPoint() {
+  if (current_path_index_ >= path_points_.size() - 1) {
+    // 到达最后一个点，开始攻击
+    if (target_building_ && !target_building_->isDestroyed()) {
+      attackBuilding(target_building_);
+    }
+    return;
+  }
+
+  current_path_index_++;
+  Vec2 nextPos = path_points_[current_path_index_];
+
+  // 移动到下一个点，完成后继续移动
+  changeState(SoldierState::kMove);
+
+  float distance = getPosition().distance(nextPos);
+  float moveTime = distance / speed_;
+
+  MoveTo* moveAction = MoveTo::create(moveTime, nextPos);
+  CallFunc* moveEndCallBack =
+      CallFunc::create([=]() { moveToNextPathPoint(); });
+
+  runAction(Sequence::create(moveAction, moveEndCallBack, nullptr));
+}
+void Soldier::setSpeed(float speed) { speed_ = speed; }
+void Soldier::createPhysicsBody(float radius) {
+  // 仅设置碰撞半径，用于手动检测
+  setCollisionRadius(radius);
+  scheduleUpdate();  // 开启update检测
+}
+void Soldier::update(float dt) {
+  Node::update(dt);
+
+  // 简化的碰撞分离逻辑
+  Vec2 myPos = getPosition();
+  float myRadius = getCollisionRadius();
+
+  auto scene = Director::getInstance()->getRunningScene();
+  for (Node* child : scene->getChildren()) {
+    Soldier* other = dynamic_cast<Soldier*>(child);
+    if (other && other != this && !other->isDead()) {
+      float dist = myPos.distance(other->getPosition());
+      float minDist = myRadius + other->getCollisionRadius();
+      if (dist < minDist && dist > 5.0f) {
+        Vec2 dir = (myPos - other->getPosition()).getNormalized();
+        setPosition(myPos + dir * (minDist - dist) * 0.5f);
+      }
+    }
   }
 }

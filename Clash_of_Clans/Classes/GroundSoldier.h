@@ -10,6 +10,8 @@ class GroundSoldier : public Soldier {
 
   // 重写移动逻辑：添加建筑碰撞检测,当前注释掉了,而且还要加上自动寻路
   void moveTo(const Vec2& targetPos, int speed) override;
+  void calculateDetourPath(const Vec2& start, const Vec2& end);
+  bool checkPathCrossBuilding(const Vec2& start, const Vec2& end);
 };
 
 #endif  // !__GROUND_SOLDIER_H__
