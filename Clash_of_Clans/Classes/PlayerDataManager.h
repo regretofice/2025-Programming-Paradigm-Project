@@ -7,6 +7,15 @@
 
 #include "TimeTools.h"
 #include "cocos2d.h"
+
+struct BuildingData {
+  int type;
+  float positionX;
+  float positionY;
+  int level;
+  std::string name;
+};
+
 class PlayerDataManager : public cocos2d::Ref {
  public:
   // 获取实例（全局只有这一个）
@@ -43,6 +52,19 @@ class PlayerDataManager : public cocos2d::Ref {
   void setBuilderLimit(int limit);
   // 设置建筑工人回复速率
   void setBuilderGrowthRate(int rate);
+
+  /////////////////////////////
+  //   建筑存档相关接口
+  void addBuildingData(const BuildingData& data);
+  const std::vector<BuildingData>& getAllBuildingData() const;
+  void clearBuildingData();
+
+  ///////////////////////////////
+  // 保存数据接口
+  //  手动保存所有数据到本地
+  void saveData();
+  // 手动从本地加载所有数据
+  void loadData();
 
   // 重置所有数据的数值（创建实例时/更换存档调用）
   void resetAllData();
@@ -97,6 +119,7 @@ class PlayerDataManager : public cocos2d::Ref {
   // 启动在线计时器，自动增长圣水/金币/建筑工人
   void startOnlineTimer();
 
+  std::vector<BuildingData> buildingDatas_;  // 建筑数据列表
   //////////////////////
   // 数据同步到本地文件的端口
 
@@ -111,6 +134,7 @@ class PlayerDataManager : public cocos2d::Ref {
   void syncBuilderGrowRateToLocal();
   void syncAllDataToLocal();
   void syncTimeToLocal();
+  void syncBuildingToLocal();
 };
 
 #endif  // __PLAYER_DATA_MANAGER_H__

@@ -46,33 +46,7 @@ PDM::~PlayerDataManager() {
 }
 
 // 初始化数据：从本地加载，无数据则设默认值
-void PDM::initData() {
-  int defaultGold = 0;
-  int defaultGoldLimit = 100;
-  int defaultElixir = 0;
-  int defaultElixirLimit = 100;
-  int defaultBuilder = 0;
-  int defaultBuilderLimit = 5;
-  std::string defaultTimeStr = std::to_string(TimeTools::getCurrentTimeMs());
-
-  setGoldLimit(
-      userDefault_->getIntegerForKey(kKeyGoldLimit.c_str(), defaultGoldLimit));
-  setGold(userDefault_->getIntegerForKey(kKeyGold.c_str(), defaultGold));
-  setElixirLimit(userDefault_->getIntegerForKey(kKeyElixirLimit.c_str(),
-                                                defaultElixirLimit));
-  setElixir(userDefault_->getIntegerForKey(kKeyElixir.c_str(), defaultElixir));
-
-  setBuilderLimit(userDefault_->getIntegerForKey(kKeyBuilderLimit.c_str(),
-                                                 defaultBuilderLimit));
-  setBuilder(
-      userDefault_->getIntegerForKey(kKeyBuilder.c_str(), defaultBuilder));
-
-  std::string timeStr =
-      userDefault_->getStringForKey(kKeyLastRecordTime.c_str(), defaultTimeStr);
-  lastRecordTime_ = std::stoll(timeStr);
-  CCLOG("玩家初始数据:\n金币:%d  圣水:%d  建筑工人:%d", gold_, elixir_,
-        builder_);
-}
+void PDM::initData() { loadData(); }
 
 int PDM::getGold() const { return gold_; }
 int PDM::getElixir() const { return elixir_; }
@@ -204,6 +178,28 @@ void PDM::syncTimeToLocal() {
                                 std::to_string(lastRecordTime_));
   userDefault_->flush();
 }
+void PDM::syncBuildingToLocal() {
+  // 保存建筑数据
+  int buildingCount = buildingDatas_.size();
+  userDefault_->setIntegerForKey("buildingCount", buildingCount);
+
+  for (int i = 0; i < buildingCount; ++i) {
+    std::string prefix = "building_" + std::to_string(i) + "_";
+    userDefault_->setIntegerForKey((prefix + "type").c_str(),
+                                   buildingDatas_[i].type);
+    userDefault_->setFloatForKey((prefix + "x").c_str(),
+                                 buildingDatas_[i].positionX);
+    userDefault_->setFloatForKey((prefix + "y").c_str(),
+                                 buildingDatas_[i].positionY);
+    userDefault_->setIntegerForKey((prefix + "level").c_str(),
+                                   buildingDatas_[i].level);
+    userDefault_->setStringForKey((prefix + "name").c_str(),
+                                  buildingDatas_[i].name);
+  }
+
+  userDefault_->flush();
+}
+
 void PDM::syncAllDataToLocal() {
   syncGoldToLocal();
   syncGoldLimitToLocal();
@@ -212,6 +208,7 @@ void PDM::syncAllDataToLocal() {
   syncBuilderToLocal();
   syncBuilderLimitToLocal();
   syncTimeToLocal();
+  syncBuildingToLocal();
 }
 void PDM::resetAllData() {
   gold_ = 0;
@@ -263,4 +260,63 @@ void PDM::startOnlineTimer() {
   //       CCLOG("UI定时器触发，当前圣水：%d", currentElixir_);  // 新增日志
   //     },
   //     0.5f, "elixirUpdate");
+}
+
+void PlayerDataManager::addBuildingData(const BuildingData& data) {
+  buildingDatas_.push_back(data);
+}
+
+// 获取所有建筑数据
+const std::vector<BuildingData>& PlayerDataManager::getAllBuildingData() const {
+  return buildingDatas_;
+}
+
+// 清空建筑数据
+void PlayerDataManager::clearBuildingData() { buildingDatas_.clear(); }
+
+void PDM::loadData() {
+  // 从本地存储重新加载数据（复用initData中的读取逻辑）
+  setGoldLimit(
+      userDefault_->getIntegerForKey(kKeyGoldLimit.c_str(), gold_limit_));
+  setGold(userDefault_->getIntegerForKey(kKeyGold.c_str(), gold_));
+  setElixirLimit(
+      userDefault_->getIntegerForKey(kKeyElixirLimit.c_str(), elixir_limit_));
+  setElixir(userDefault_->getIntegerForKey(kKeyElixir.c_str(), elixir_));
+
+  setBuilderLimit(
+      userDefault_->getIntegerForKey(kKeyBuilderLimit.c_str(), builder_limit_));
+  setBuilder(userDefault_->getIntegerForKey(kKeyBuilder.c_str(), builder_));
+
+  setGoldGrowthRate(userDefault_->getIntegerForKey(kKeyGoldGrowthRate.c_str(),
+                                                   gold_growth_rate));
+  setElixirGrowthRate(userDefault_->getIntegerForKey(
+      kKeyElixirGrowthRate.c_str(), elixir_growth_rate));
+  setBuilderGrowthRate(userDefault_->getIntegerForKey(
+      kKeyBuilderGrowthRate.c_str(), builder_growth_rate));
+
+  std::string timeStr = userDefault_->getStringForKey(
+      kKeyLastRecordTime.c_str(), std::to_string(lastRecordTime_));
+  lastRecordTime_ = std::stoll(timeStr);
+
+  buildingDatas_.clear();
+  int buildingCount = userDefault_->getIntegerForKey("buildingCount", 0);
+
+  for (int i = 0; i < buildingCount; ++i) {
+    std::string prefix = "building_" + std::to_string(i) + "_";
+    BuildingData data;
+    data.type = userDefault_->getIntegerForKey((prefix + "type").c_str(), 0);
+    data.positionX = userDefault_->getFloatForKey((prefix + "x").c_str(), 0);
+    data.positionY = userDefault_->getFloatForKey((prefix + "y").c_str(), 0);
+    data.level = userDefault_->getIntegerForKey((prefix + "level").c_str(), 1);
+    data.name = userDefault_->getStringForKey((prefix + "name").c_str(), "");
+
+    buildingDatas_.push_back(data);
+  }
+  CCLOG("手动加载玩家数据:\n金币:%d  圣水:%d  建筑工人:%d", gold_, elixir_,
+        builder_);
+}
+
+void PlayerDataManager::saveData() {
+  syncAllDataToLocal();  // 复用已有的全量同步逻辑
+  CCLOG("手动触发数据保存完成");
 }
