@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>frames</key>
+        <dict>
+            <key>rarbarian_idle_01.png</key>
+            <dict>
+                <key>aliases</key>
+                <array/>
+                <key>spriteOffset</key>
+                <string>{0,0}</string>
+                <key>spriteSize</key>
+                <string>{66,91}</string>
+                <key>spriteSourceSize</key>
+                <string>{66,91}</string>
+                <key>textureRect</key>
+                <string>{{0,0},{66,91}}</string>
+                <key>textureRotated</key>
+                <false/>
+            </dict>
+        </dict>
+        <key>metadata</key>
+        <dict>
+            <key>format</key>
+            <integer>3</integer>
+            <key>pixelFormat</key>
+            <string>RGBA8888</string>
+            <key>premultiplyAlpha</key>
+            <false/>
+            <key>realTextureFileName</key>
+            <string>rarbarian_idle.png</string>
+            <key>size</key>
+            <string>{66,91}</string>
+            <key>smartupdate</key>
+            <string>$TexturePacker:SmartUpdate:9ee0ff4741fa4660f66761a752f3dfff:52f6e729fc9f7a682c2e052cc2ebe880:c74fe870bd1ab574c824a3f3d7e84e5d$</string>
+            <key>textureFileName</key>
+            <string>rarbarian_idle.png</string>
+        </dict>
+    </dict>
+</plist>
