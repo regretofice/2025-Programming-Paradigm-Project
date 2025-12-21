@@ -115,10 +115,8 @@ bool MapSelectScene::init()
 
 void MapSelectScene::selectMap1Callback(Ref* pSender)
 {
-    // 这里需要将地图1的文件名传递给MapScene
-    // 我们可以使用UserDefault来存储选择的地图
     auto userDefault = UserDefault::getInstance();
-    userDefault->setStringForKey("selected_map", "map1.tmx"); // 假设地图1的文件名
+    userDefault->setStringForKey("selected_map", "map1.tmx"); 
     userDefault->flush();
 
     Director::getInstance()->replaceScene(TransitionFade::create(0.5f, MapScene::createScene()));
@@ -127,7 +125,7 @@ void MapSelectScene::selectMap1Callback(Ref* pSender)
 void MapSelectScene::selectMap2Callback(Ref* pSender)
 {
     auto userDefault = UserDefault::getInstance();
-    userDefault->setStringForKey("selected_map", "map2.tmx"); // 假设地图2的文件名
+    userDefault->setStringForKey("selected_map", "map2.tmx"); 
     userDefault->flush();
 
     Director::getInstance()->replaceScene(TransitionFade::create(0.5f, MapScene::createScene()));

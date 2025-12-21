@@ -12,27 +12,39 @@
 
 USING_NS_CC;
 
-Scene* MapScene::createScene() { return MapScene::create(); }
+Scene* MapScene::createScene() 
+{  // 默认使用UserDefault中保存的地图，如果没有则使用map2.tmx
+    auto userDefault = UserDefault::getInstance();
+    std::string mapFile = userDefault->getStringForKey("selected_map", "map2.tmx");
 
+    return createSceneWithMap(mapFile);
+}
+
+Scene* MapScene::createSceneWithMap(const std::string& mapFile) {
+    auto scene = Scene::create();
+    auto layer = MapScene::create();
+    if (layer) {
+        layer->_mapFileName = mapFile;
+        scene->addChild(layer);
+    }
+    return scene;
+}
 void MapScene::createMap() {
+ // 加载TMX地图文件
   auto visibleSize = Director::getInstance()->getVisibleSize();
   Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-  // 加载TMX地图文件
-  _tileMap = TMXTiledMap::create("map2.tmx");
-
-  if (!_tileMap) {
-    // 如果地图文件不存在，显示错误信息
-    auto errorLabel =
-        Label::createWithTTF("地图文件加载失败", "fonts/Marker Felt.ttf", 36);
-    errorLabel->setColor(Color3B::RED);
-    errorLabel->setPosition(Vec2(visibleSize.width / 2 + origin.x,
-                                 visibleSize.height / 2 + origin.y));
-    this->addChild(errorLabel, 10);
-    return;
+  // 如果_mapFileName为空，则从UserDefault获取
+  if (_mapFileName.empty()) {
+      auto userDefault = UserDefault::getInstance();
+      _mapFileName = userDefault->getStringForKey("selected_map", "map2.tmx");
   }
 
+  // 加载TMX地图文件
+  _tileMap = TMXTiledMap::create(_mapFileName);
   // 获取地图信息
+
+
   _mapWidth = static_cast<int>(_tileMap->getMapSize().width);
   _mapHeight = static_cast<int>(_tileMap->getMapSize().height);
   _tileSize = static_cast<int>(_tileMap->getTileSize().width);

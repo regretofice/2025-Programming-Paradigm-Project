@@ -28,12 +28,13 @@ class MapScene : public cocos2d::Scene {
   void spawnSoldierAtPosition(SoldierType type, const Vec2& pos);
   bool checkResourceEnough(SoldierType type);
   void consumeResource(SoldierType type);
-
+  static cocos2d::Scene* createSceneWithMap(const std::string& mapFile);
   CREATE_FUNC(MapScene);
   virtual void onEnter() override;
 
  private:
   cocos2d::TMXTiledMap* _tileMap;
+  std::string _mapFileName; // 存储地图文件名
   int _mapWidth;
   int _mapHeight;
   int _tileSize;
