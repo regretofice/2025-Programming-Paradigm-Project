@@ -1,37 +1,41 @@
-#ifndef RESOURCE_BUILDING_H
+ï»¿#ifndef RESOURCE_BUILDING_H
 #define RESOURCE_BUILDING_H
 
 #include "Building.h"
 
 class ResourceBuilding : public Building {
-private:
-    // ×ÊÔ´½¨Öş×¨ÊôÊôĞÔ
-    ResourceType _resType;       // ²ú³ö×ÊÔ´ÀàĞÍ
-    int _productionPerSec;       // Ã¿Ãë²ú³ö
-    int _maxCapacity;            // ×î´ó´æ´¢ÈİÁ¿
-    int _currentRes;             // µ±Ç°´æ´¢×ÊÔ´
+ private:
+  ResourceBuilding();  // å£°æ˜ç§æœ‰æ„é€ å‡½æ•°
+  // èµ„æºå»ºç­‘ä¸“å±å±æ€§
+  ResourceType _resType;  // äº§å‡ºèµ„æºç±»å‹
+  int _productionPerSec;  // æ¯ç§’äº§å‡º
+  int _maxCapacity;       // æœ€å¤§å­˜å‚¨å®¹é‡
+  int _currentRes;        // å½“å‰å­˜å‚¨èµ„æº
 
-public:
-    static ResourceBuilding* create(const std::string& texPath, const std::string& name,
-        CampType camp, int level, int maxLevel, int maxHP, float size,
-        int upgradeCost, float upgradeTime,
-        ResourceType resType, int productionPerSec, int maxCapacity);
+ public:
+  static ResourceBuilding* create(const std::string& texPath,
+                                  const std::string& name, CampType camp,
+                                  int level, int maxLevel, int maxHP,
+                                  float size, int upgradeCost,
+                                  float upgradeTime, ResourceType resType,
+                                  int productionPerSec, int maxCapacity);
 
-    virtual bool init(const std::string& texPath, const std::string& name,
-        CampType camp, int level, int maxLevel, int maxHP, float size,
-        int upgradeCost, float upgradeTime,
-        ResourceType resType, int productionPerSec, int maxCapacity);
+  virtual bool init(const std::string& texPath, const std::string& name,
+                    CampType camp, int level, int maxLevel, int maxHP,
+                    float size, int upgradeCost, float upgradeTime,
+                    ResourceType resType, int productionPerSec,
+                    int maxCapacity);
 
-    // ×¨Êô·½·¨
-    void produceResource(float dt); // Éú²ú×ÊÔ´
-    int collectResource();          // ÊÕ¼¯×ÊÔ´£¨·µ»ØÊÕ¼¯Á¿£©
-    virtual void update(float dt) override; // ÖØĞ´¸üĞÂÂß¼­
+  // ä¸“å±æ–¹æ³•
+  void produceResource(float dt);          // ç”Ÿäº§èµ„æº
+  int collectResource();                   // æ”¶é›†èµ„æºï¼ˆè¿”å›æ”¶é›†é‡ï¼‰
+  virtual void update(float dt) override;  // é‡å†™æ›´æ–°é€»è¾‘
 
-    // Getter
-    int getCurrentResource() const { return _currentRes; }
-    ResourceType getResType() const { return _resType; }
+  // Getter
+  int getCurrentResource() const { return _currentRes; }
+  ResourceType getResType() const { return _resType; }
 
-    virtual ~ResourceBuilding();
+  virtual ~ResourceBuilding();
 };
 
-#endif // RESOURCE_BUILDING_H
+#endif  // RESOURCE_BUILDING_H

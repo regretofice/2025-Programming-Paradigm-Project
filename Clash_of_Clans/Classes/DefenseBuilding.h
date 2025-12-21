@@ -1,42 +1,44 @@
-#ifndef DEFENSE_BUILDING_H
+ï»¿#ifndef DEFENSE_BUILDING_H
 #define DEFENSE_BUILDING_H
 
 #include "Building.h"
 
-// Ç°ÏòÉùÃ÷µĞÈËÀà£¨±ÜÃâÑ­»·ÒıÓÃ£©
-class Enemy;
+// å‰å‘å£°æ˜æ•Œäººç±»ï¼ˆé¿å…å¾ªç¯å¼•ç”¨ï¼‰
+class Soldier;
 
 class DefenseBuilding : public Building {
-private:
-    // ·ÀÓù½¨Öş×¨ÊôÊôĞÔ
-    int _dps;               // Ã¿ÃëÉËº¦
-    float _attackRange;     // ¹¥»÷·¶Î§£¨°ë¾¶£©
-    AttackType _attackType; // ¹¥»÷·½Ê½
-    float _attackCD;        // ¹¥»÷ÀäÈ´£¨Ãë£©
-    float _currentCD;       // µ±Ç°ÀäÈ´
-    Enemy* _target;         // µ±Ç°¹¥»÷Ä¿±ê
+ private:
+  // é˜²å¾¡å»ºç­‘ä¸“å±å±æ€§
+  int _dps;                // æ¯ç§’ä¼¤å®³
+  float _attackRange;      // æ”»å‡»èŒƒå›´ï¼ˆåŠå¾„ï¼‰
+  AttackType _attackType;  // æ”»å‡»æ–¹å¼
+  float _attackCD;         // æ”»å‡»å†·å´ï¼ˆç§’ï¼‰
+  float _currentCD;        // å½“å‰å†·å´
+  Soldier* _target;        // å½“å‰æ”»å‡»ç›®æ ‡
 
-public:
-    static DefenseBuilding* create(const std::string& texPath, const std::string& name,
-        CampType camp, int level, int maxHP, float size,
-        int upgradeCost, float upgradeTime,
-        int dps, float attackRange, AttackType attackType, float attackCD);
+ public:
+  static DefenseBuilding* create(const std::string& texPath,
+                                 const std::string& name, CampType camp,
+                                 int level, int maxLevel,  // æ–°å¢maxLevel
+                                 int maxHP, float size, int upgradeCost,
+                                 float upgradeTime, int dps, float attackRange,
+                                 AttackType attackType, float attackCD);
 
-    virtual bool init(const std::string& texPath, const std::string& name,
-        CampType camp, int level, int maxLevel, int maxHP, float size,
-        int upgradeCost, float upgradeTime,
-        int dps, float attackRange, AttackType attackType, float attackCD);
+  virtual bool init(const std::string& texPath, const std::string& name,
+                    CampType camp, int level, int maxLevel, int maxHP,
+                    float size, int upgradeCost, float upgradeTime, int dps,
+                    float attackRange, AttackType attackType, float attackCD);
 
-    // ×¨Êô·½·¨
-    void findTarget();      // Ñ°ÕÒ¹¥»÷·¶Î§ÄÚµÄµĞÈË
-    void attackTarget();    // ¹¥»÷Ä¿±ê
-    virtual void update(float dt) override; // ÖØĞ´¸üĞÂÂß¼­
+  // ä¸“å±æ–¹æ³•
+  void findTarget();                       // å¯»æ‰¾æ”»å‡»èŒƒå›´å†…çš„æ•Œäºº
+  void attackTarget();                     // æ”»å‡»ç›®æ ‡
+  virtual void update(float dt) override;  // é‡å†™æ›´æ–°é€»è¾‘
 
-    // Getter
-    int getDPS() const { return _dps; }
-    float getAttackRange() const { return _attackRange; }
+  // Getter
+  int getDPS() const { return _dps; }
+  float getAttackRange() const { return _attackRange; }
 
-    virtual ~DefenseBuilding();
+  virtual ~DefenseBuilding();
 };
 
-#endif // DEFENSE_BUILDING_H
+#endif  // DEFENSE_BUILDING_H

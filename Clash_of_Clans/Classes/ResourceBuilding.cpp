@@ -1,75 +1,85 @@
-#include "ResourceBuilding.h"
+Ôªø#include "ResourceBuilding.h"
 
 ResourceBuilding::ResourceBuilding()
-    : _resType(ResourceType::GOLD), _productionPerSec(0),
-    _maxCapacity(0), _currentRes(0) {
-}
+    : _resType(ResourceType::GOLD),
+      _productionPerSec(0),
+      _maxCapacity(0),
+      _currentRes(0) {}
 
 ResourceBuilding::~ResourceBuilding() {}
 
-ResourceBuilding* ResourceBuilding::create(const std::string& texPath, const std::string& name,
-    CampType camp, int level,int maxLevel, int maxHP, float size,
-    int upgradeCost, float upgradeTime,
-    ResourceType resType, int productionPerSec, int maxCapacity) {
-    ResourceBuilding* res = new (std::nothrow) ResourceBuilding();
-    if (res && res->init(texPath, name, camp, level, maxLevel, maxHP, size, upgradeCost, upgradeTime, resType, productionPerSec, maxCapacity)) {
-        res->autorelease();
-        return res;
-    }
-    CC_SAFE_DELETE(res);
-    return nullptr;
+ResourceBuilding* ResourceBuilding::create(
+    const std::string& texPath, const std::string& name, CampType camp,
+    int level, int maxLevel, int maxHP, float size, int upgradeCost,
+    float upgradeTime, ResourceType resType, int productionPerSec,
+    int maxCapacity) {
+  ResourceBuilding* res = new (std::nothrow) ResourceBuilding();
+  if (res &&
+      res->init(texPath, name, camp, level, maxLevel, maxHP, size, upgradeCost,
+                upgradeTime, resType, productionPerSec, maxCapacity)) {
+    res->autorelease();
+    return res;
+  }
+  CC_SAFE_DELETE(res);
+  return nullptr;
 }
 
 bool ResourceBuilding::init(const std::string& texPath, const std::string& name,
-    CampType camp, int level, int maxLevel, int maxHP, float size,
-    int upgradeCost, float upgradeTime,
-    ResourceType resType, int productionPerSec, int maxCapacity) {
-    if (!Building::init(texPath, name, camp, level, maxLevel, maxHP, size, upgradeCost, upgradeTime, BuildingType::RESOURCE)) {
-        return false;
-    }
+                            CampType camp, int level, int maxLevel, int maxHP,
+                            float size, int upgradeCost, float upgradeTime,
+                            ResourceType resType, int productionPerSec,
+                            int maxCapacity) {
+  if (!Building::init(texPath, name, camp, level, maxLevel, maxHP, size,
+                      upgradeCost, upgradeTime, BuildingType::RESOURCE,
+                      size / 2)) {
+    CCLOG("ResourceBuilding init failed: Building init failed");
+    return false;
+  }
 
-    // ≥ı ºªØ◊ ‘¥ Ù–‘
-    _resType = resType;
-    _productionPerSec = productionPerSec;
-    _maxCapacity = maxCapacity;
-    _currentRes = 0;
+  // ÂàùÂßãÂåñËµÑÊ∫êÂ±ûÊÄß
+  _resType = resType;
+  _productionPerSec = productionPerSec;
+  _maxCapacity = maxCapacity;
+  _currentRes = 0;
 
-    return true;
+  CCLOG("ResourceBuilding init success");
+  return true;
 }
 
 void ResourceBuilding::produceResource(float dt) {
-    if (_isDestroyed || _productionPerSec <= 0) return;
+  if (_isDestroyed || _productionPerSec <= 0) return;
 
-    // º∆À„±æ¥Œ≤˙≥ˆ£®√ø√Î≤˙≥ˆ *  ±º‰‘ˆ¡ø£©
-    int produce = static_cast<int>(_productionPerSec * dt);
-    if (produce <= 0) return;
+  // ËÆ°ÁÆóÊú¨Ê¨°‰∫ßÂá∫ÔºàÊØèÁßí‰∫ßÂá∫ * Êó∂Èó¥Â¢ûÈáèÔºâ
+  int produce = static_cast<int>(_productionPerSec * dt);
+  if (produce <= 0) return;
 
-    // œﬁ÷∆¥Ê¥¢»›¡ø
-    _currentRes += produce;
-    _currentRes = std::min(_currentRes, _maxCapacity);
+  // ÈôêÂà∂Â≠òÂÇ®ÂÆπÈáè
+  _currentRes += produce;
+  _currentRes = std::min(_currentRes, _maxCapacity);
 
-    // »’÷æ ‰≥ˆ£® æ¿˝£©
-    const char* resName = _resType == ResourceType::GOLD ? "Ω±“" : " •ÀÆ";
-    CCLOG("[%s]…˙≤˙%d%s£¨µ±«∞¥Ê¥¢£∫%d/%d", _name.c_str(), produce, resName, _currentRes, _maxCapacity);
+  // Êó•ÂøóËæìÂá∫ÔºàÁ§∫‰æãÔºâ
+  const char* resName = _resType == ResourceType::GOLD ? "ÈáëÂ∏Å" : "Âú£Ê∞¥";
+  CCLOG("[%s]Áîü‰∫ß%d%sÔºåÂΩìÂâçÂ≠òÂÇ®Ôºö%d/%d", _name.c_str(), produce, resName,
+        _currentRes, _maxCapacity);
 }
 
 int ResourceBuilding::collectResource() {
-    if (_isDestroyed || _currentRes <= 0) return 0;
+  if (_isDestroyed || _currentRes <= 0) return 0;
 
-    //  ’ºØÀ˘”–◊ ‘¥£® µº ”Œœ∑ø…¿©’πŒ™≤ø∑÷ ’ºØ£©
-    int collected = _currentRes;
-    _currentRes = 0;
+  // Êî∂ÈõÜÊâÄÊúâËµÑÊ∫êÔºàÂÆûÈôÖÊ∏∏ÊàèÂèØÊâ©Â±ï‰∏∫ÈÉ®ÂàÜÊî∂ÈõÜÔºâ
+  int collected = _currentRes;
+  _currentRes = 0;
 
-    const char* resName = _resType == ResourceType::GOLD ? "Ω±“" :  " •ÀÆ";
-    CCLOG("[%s] ’ºØ%d%s", _name.c_str(), collected, resName);
-    return collected;
+  const char* resName = _resType == ResourceType::GOLD ? "ÈáëÂ∏Å" : "Âú£Ê∞¥";
+  CCLOG("[%s]Êî∂ÈõÜ%d%s", _name.c_str(), collected, resName);
+  return collected;
 }
 
 void ResourceBuilding::update(float dt) {
-    Building::update(dt);
+  Building::update(dt);
 
-    if (_isDestroyed) return;
+  if (_isDestroyed) return;
 
-    // √ø÷°…˙≤˙◊ ‘¥
-    produceResource(dt);
+  // ÊØèÂ∏ßÁîü‰∫ßËµÑÊ∫ê
+  produceResource(dt);
 }

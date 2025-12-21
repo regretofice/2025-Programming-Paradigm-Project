@@ -1,66 +1,65 @@
-#ifndef BUILDING_H
+ï»¿#ifndef BUILDING_H
 #define BUILDING_H
 
-#include "cocos2d.h"
-#include "BuildingEnums.h"
 #include <string>
+
+#include "BuildingEnums.h"
+#include "cocos2d.h"
 
 USING_NS_CC;
 
 class Building : public Sprite {
-protected:
-    // Í¨ÓÃÊôĞÔ
-    int _level;                  // µÈ¼¶
-    int _maxLevel;               // ×î¸ßµÈ¼¶
-    int _maxHP;                  // ×î´óÑªÁ¿
-    int _currentHP;              // µ±Ç°ÑªÁ¿
-    float _size;                 // ±ß³¤£¨½¨Öş´óĞ¡£©
-    CampType _camp;                  // ÕóÓª¹éÊô
-    BuildingType _type;          // ½¨ÖşÀàĞÍ
-    bool _isDestroyed;           // ÊÇ·ñ±»´İ»Ù
-    int _upgradeCost;            // Éı¼¶ËùĞè×ÊÔ´
-    float _upgradeTime;          // Éı¼¶Ê±¼ä£¨Ãë£©
-    std::string _name;           // ½¨ÖşÃû³Æ
+ protected:
+  // é€šç”¨å±æ€§
+  int _level;               // ç­‰çº§
+  int _maxLevel;            // æœ€é«˜ç­‰çº§
+  int _maxHP;               // æœ€å¤§è¡€é‡
+  int _currentHP;           // å½“å‰è¡€é‡
+  float _size;              // è¾¹é•¿ï¼ˆå»ºç­‘å¤§å°ï¼‰
+  CampType _camp;           // é˜µè¥å½’å±
+  BuildingType _type;       // å»ºç­‘ç±»å‹
+  bool _isDestroyed;        // æ˜¯å¦è¢«æ‘§æ¯
+  int _upgradeCost;         // å‡çº§æ‰€éœ€èµ„æº
+  float _upgradeTime;       // å‡çº§æ—¶é—´ï¼ˆç§’ï¼‰
+  std::string _name;        // å»ºç­‘åç§°
+  float collision_radius_;  // å»ºç­‘ç¢°æ’åŠå¾„
 
-public:
-    // Cocos2d·ç¸ñ´´½¨º¯Êı£¨ÄÚ´æ×Ô¶¯¹ÜÀí£©
-    static Building* create(const std::string& texPath, const std::string& name,
-        CampType camp, int level, int maxLevel, int maxHP, float size,
-        int upgradeCost, float upgradeTime, BuildingType type);
+ public:
+  // Cocos2dé£æ ¼åˆ›å»ºå‡½æ•°ï¼ˆå†…å­˜è‡ªåŠ¨ç®¡ç†ï¼‰
+  static Building* create(const std::string& texPath, const std::string& name,
+                          CampType camp, int level, int maxLevel, int maxHP,
+                          float size, int upgradeCost, float upgradeTime,
+                          BuildingType type, float collision_radius);
 
-    // ³õÊ¼»¯º¯Êı
-    virtual bool init(const std::string& texPath, const std::string& name,
-        CampType camp, int level, int maxLevel, int maxHP, float size,
-        int upgradeCost, float upgradeTime, BuildingType type);
+  // åˆå§‹åŒ–å‡½æ•°
+  virtual bool init(const std::string& texPath, const std::string& name,
+                    CampType camp, int level, int maxLevel, int maxHP,
+                    float size, int upgradeCost, float upgradeTime,
+                    BuildingType type, float collision_radius);
 
-    // Í¨ÓÃ·½·¨
-    virtual void takeDamage(int damage);  // ÊÜ¹¥»÷
-    virtual bool upgrade();               // Éı¼¶£¨·µ»ØÊÇ·ñ³É¹¦£©
-    virtual void checkDestroyed();        // ¼ì²éÊÇ·ñ±»´İ»Ù
-    virtual void update(float dt) override; // Ã¿Ö¡¸üĞÂ£¨Ğéº¯Êı£¬×ÓÀàÖØĞ´£©
+  // é€šç”¨æ–¹æ³•
+  virtual void takeDamage(int damage);     // å—æ”»å‡»
+  virtual bool upgrade();                  // å‡çº§ï¼ˆè¿”å›æ˜¯å¦æˆåŠŸï¼‰
+  virtual void checkDestroyed();           // æ£€æŸ¥æ˜¯å¦è¢«æ‘§æ¯
+  virtual void update(float dt) override;  // æ¯å¸§æ›´æ–°ï¼ˆè™šå‡½æ•°ï¼Œå­ç±»é‡å†™ï¼‰
+  BuildingType getType() const { return _type; }  // è·å–å»ºç­‘ç±»å‹
 
-    // Getter/Setter
-    int getLevel() const {
-        return _level; 
-    }
-    int getCurrentHP() const {
-        return _currentHP;
-    }
-    CampType getCamp() const {
-        return _camp; 
-    }
-    bool isDestroyed() const {
-        return _isDestroyed;
-    } 
-    const std::string& getName() const override {
-        return _name;
-    }
+  // Getter/Setter
+  int getLevel() const { return _level; }
+  int getCurrentHP() const { return _currentHP; }
+  CampType getCamp() const { return _camp; }
+  bool isDestroyed() const { return _isDestroyed; }
+  const std::string& getName() const override { return _name; }
 
-    // Îö¹¹º¯Êı
-    virtual ~Building();
+  // è·å–å»ºç­‘ç¢°æ’èŒƒå›´,å›ºå®šå»ºç­‘åŠå¾„
+  static float getCollisionRadius() { return 40.0f; }
+
+  // è·å–å»ºç­‘ä½ç½®ï¼ˆä¸–ç•Œåæ ‡ç³»ï¼‰
+  cocos2d::Vec2 getWorldPosition() const { return getPosition(); }
+
+  Building();
+  // ææ„å‡½æ•°
+  virtual ~Building();
 };
-
-
-
 
 #endif

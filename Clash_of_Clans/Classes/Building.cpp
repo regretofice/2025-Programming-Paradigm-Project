@@ -1,92 +1,109 @@
-#include "Building.h"
+ï»¿#include "Building.h"
 
+#include "BuildingManager.h"
 Building::Building()
-    : _level(1), _maxLevel(2), _maxHP(0), _currentHP(0), _size(0.0f),
-    _camp(CampType::PLAYER), _type(BuildingType::COMMON),
-    _isDestroyed(false), _upgradeCost(0), _upgradeTime(0.0f), _name("") {
-}
+    : _level(1),
+      _maxLevel(2),
+      _maxHP(0),
+      _currentHP(0),
+      _size(0.0f),
+      _camp(CampType::PLAYER),
+      _type(BuildingType::COMMON),
+      _isDestroyed(false),
+      _upgradeCost(0),
+      _upgradeTime(0.0f),
+      _name("") {}
 
 Building::~Building() {}
 
 Building* Building::create(const std::string& texPath, const std::string& name,
-    CampType camp, int level, int maxLevel, int maxHP, float size,
-    int upgradeCost, float upgradeTime, BuildingType type) {
-    Building* building = new (std::nothrow) Building();
-    if (building && building->init(texPath, name, camp, level, maxLevel, maxHP, size, upgradeCost, upgradeTime, type)) {
-        building->autorelease(); // Cocos2d×Ô¶¯ÄÚ´æ¹ÜÀí
-        return building;
-    }
-    CC_SAFE_DELETE(building);
-    return nullptr;
+                           CampType camp, int level, int maxLevel, int maxHP,
+                           float size, int upgradeCost, float upgradeTime,
+                           BuildingType type, float collision_radius) {
+  Building* building = new (std::nothrow) Building();
+  if (building &&
+      building->init(texPath, name, camp, level, maxLevel, maxHP, size,
+                     upgradeCost, upgradeTime, type, collision_radius)) {
+    building->autorelease();  // Cocos2dè‡ªåŠ¨å†…å­˜ç®¡ç†
+    BuildingManager::getInstance()->addBuilding(building);
+
+    return building;
+  }
+  CC_SAFE_DELETE(building);
+  return nullptr;
 }
 
 bool Building::init(const std::string& texPath, const std::string& name,
-    CampType camp, int level, int maxLevel, int maxHP, float size,
-    int upgradeCost, float upgradeTime, BuildingType type) {
-    // ³õÊ¼»¯Sprite£¨Cocos2däÖÈ¾»ù´¡£©
-    if (!Sprite::initWithFile(texPath)) return false;
+                    CampType camp, int level, int maxLevel, int maxHP,
+                    float size, int upgradeCost, float upgradeTime,
+                    BuildingType type, float collision_radius) {
+  // åˆå§‹åŒ–Spriteï¼ˆCocos2dæ¸²æŸ“åŸºç¡€ï¼‰
+  if (!Sprite::initWithFile(texPath)) {
+    CCLOG("Building init failed: texture not found - %s", texPath.c_str());
+    return false;
+  }
+  // åˆå§‹åŒ–é€šç”¨å±æ€§
+  _name = name;
+  _camp = camp;
+  _level = level;
+  _maxHP = maxHP;
+  _currentHP = maxHP;  // åˆå§‹è¡€é‡æ»¡
+  _size = size;
+  _upgradeCost = upgradeCost;
+  _upgradeTime = upgradeTime;
+  _type = type;
+  _isDestroyed = false;
+  collision_radius_ = collision_radius;
 
-    // ³õÊ¼»¯Í¨ÓÃÊôĞÔ
-    _name = name;
-    _camp = camp;
-    _level = level;
-    _maxHP = maxHP;
-    _currentHP = maxHP; // ³õÊ¼ÑªÁ¿Âú
-    _size = size;
-    _upgradeCost = upgradeCost;
-    _upgradeTime = upgradeTime;
-    _type = type;
-    _isDestroyed = false;
+  // è®¾ç½®å»ºç­‘å¤§å°å’Œé”šç‚¹
+  // this->setContentSize(Size(_size, _size));
+  this->setAnchorPoint(Vec2(0.5f, 0.5f));
 
-    // ÉèÖÃ½¨Öş´óĞ¡ºÍÃªµã
-    this->setContentSize(Size(_size, _size));
-    this->setAnchorPoint(Vec2(0.5f, 0.5f));
+  // æ³¨å†Œæ¯å¸§æ›´æ–°
+  this->scheduleUpdate();
 
-    // ×¢²áÃ¿Ö¡¸üĞÂ
-    this->scheduleUpdate();
-
-    return true;
+  return true;
 }
 
 void Building::checkDestroyed() {
-    if (_currentHP <= 0 && !_isDestroyed) {
-        _isDestroyed = true;
-        this->setVisible(false); // Òş²ØÄ£ĞÍ
-        CCLOG("½¨Öş[%s]±»´İ»Ù£¡", _name.c_str());
-        // ¿ÉÀ©Õ¹£º²¥·Å´İ»Ù¶¯»­¡¢Í¨ÖªÓÎÏ·¹ÜÀíÆ÷µÈ
-    }
+  if (_currentHP <= 0 && !_isDestroyed) {
+    _isDestroyed = true;
+    this->setVisible(false);  // éšè—æ¨¡å‹
+    CCLOG("å»ºç­‘[%s]è¢«æ‘§æ¯ï¼", _name.c_str());
+    // å¯æ‰©å±•ï¼šæ’­æ”¾æ‘§æ¯åŠ¨ç”»ã€é€šçŸ¥æ¸¸æˆç®¡ç†å™¨ç­‰
+  }
 }
 
 void Building::takeDamage(int damage) {
-    if (_isDestroyed) return;
+  if (_isDestroyed) return;
 
-    _currentHP -= damage;
-    _currentHP = std::max(_currentHP, 0); // ÑªÁ¿²»µÍÓÚ0
-    checkDestroyed();
+  _currentHP -= damage;
+  _currentHP = std::max(_currentHP, 0);  // è¡€é‡ä¸ä½äº0
+  checkDestroyed();
 }
 
 bool Building::upgrade() {
-    if (_isDestroyed) {
-        CCLOG("ÎŞ·¨Éı¼¶ÒÑ´İ»ÙµÄ½¨Öş£º%s", _name.c_str());
-        return false;
-    }
+  if (_isDestroyed) {
+    CCLOG("æ— æ³•å‡çº§å·²æ‘§æ¯çš„å»ºç­‘ï¼š%s", _name.c_str());
+    return false;
+  }
 
-    if (_level == _maxLevel) {
-        CCLOG("ÎŞ·¨Éı¼¶Âú¼¶½¨Öş£º%s", _name.c_str());
-        return false;
-    }
+  if (_level == _maxLevel) {
+    CCLOG("æ— æ³•å‡çº§æ»¡çº§å»ºç­‘ï¼š%s", _name.c_str());
+    return false;
+  }
 
-    // Éı¼¶Âß¼­£ºµÈ¼¶+1£¬ÑªÁ¿ÌáÉı20%£¬Éı¼¶³É±¾ÌáÉı50%£¬Éı¼¶Ê±¼äÑÓ³¤30%
-    _level++;
-    _maxHP = static_cast<int>(_maxHP * 1.2f);
-    _currentHP = _maxHP; // Éı¼¶ºóÑªÁ¿»ØÂú
-    _upgradeCost = static_cast<int>(_upgradeCost * 1.5f); // Éı¼¶³É±¾Ìá¸ß
-    _upgradeTime = static_cast<int>(_upgradeTime * 1.3f); // Éı¼¶Ê±¼äÑÓ³¤
+  // å‡çº§é€»è¾‘ï¼šç­‰çº§+1ï¼Œè¡€é‡æå‡20%ï¼Œå‡çº§æˆæœ¬æå‡50%ï¼Œå‡çº§æ—¶é—´å»¶é•¿30%
+  _level++;
+  _maxHP = static_cast<int>(_maxHP * 1.2f);
+  _currentHP = _maxHP;                                   // å‡çº§åè¡€é‡å›æ»¡
+  _upgradeCost = static_cast<int>(_upgradeCost * 1.5f);  // å‡çº§æˆæœ¬æé«˜
+  _upgradeTime = static_cast<int>(_upgradeTime * 1.3f);  // å‡çº§æ—¶é—´å»¶é•¿
 
-    CCLOG("½¨Öş[%s]Éı¼¶ÖÁ%d¼¶£¬ĞÂÑªÁ¿£º%d", _name.c_str(), _level, _maxHP);
-    return true;
+  CCLOG("å»ºç­‘[%s]å‡çº§è‡³%dçº§ï¼Œæ–°è¡€é‡ï¼š%d", _name.c_str(), _level, _maxHP);
+  return true;
 }
 
 void Building::update(float dt) {
-    Sprite::update(dt); // »ùÀà¸üĞÂ£¨¿ÕÊµÏÖ£¬×ÓÀàÖØĞ´£©
+  Sprite::update(dt);  // åŸºç±»æ›´æ–°ï¼ˆç©ºå®ç°ï¼Œå­ç±»é‡å†™ï¼‰
 }
