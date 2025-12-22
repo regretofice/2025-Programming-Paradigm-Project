@@ -1,137 +1,145 @@
-#if defined(_MSC_VER) && (_MSC_VER >= 1900)
+ï»¿#if defined(_MSC_VER) && (_MSC_VER >= 1900)
 #pragma execution_character_set("utf-8")
 #endif
 
 #include "MapSelectScene.h"
-#include "StartScene.h"
+
 #include "MapScene.h"
+#include "StartScene.h"
 #include "ui/CocosGUI.h"
 
 USING_NS_CC;
 
-Scene* MapSelectScene::createScene()
-{
-    return MapSelectScene::create();
-}
+Scene* MapSelectScene::createScene() { return MapSelectScene::create(); }
 
-bool MapSelectScene::init()
-{
-    if (!Scene::init())
-    {
-        return false;
-    }
+bool MapSelectScene::init() {
+  if (!Scene::init()) {
+    return false;
+  }
 
-    auto visibleSize = Director::getInstance()->getVisibleSize();
-    Vec2 origin = Director::getInstance()->getVisibleOrigin();
+  auto visibleSize = Director::getInstance()->getVisibleSize();
+  Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-    // ±³¾°
-    auto background = Sprite::create("select_background.png");
-    if (!background) {
-        background = Sprite::create("start_background.png"); // Èç¹ûÃ»ÓÐÑ¡Ôñ±³¾°£¬ÓÃ¿ªÊ¼±³¾°
-    }
+  // èƒŒæ™¯
+  auto background = Sprite::create("select_background.png");
+  if (!background) {
+    background =
+        Sprite::create("start_background.png");  // å¦‚æžœæ²¡æœ‰é€‰æ‹©èƒŒæ™¯ï¼Œç”¨å¼€å§‹èƒŒæ™¯
+  }
 
-    float bgScaleX = visibleSize.width / background->getContentSize().width;
-    float bgScaleY = visibleSize.height / background->getContentSize().height;
-    background->setScale(bgScaleX, bgScaleY);
-    background->setPosition(Vec2(visibleSize.width / 2 + origin.x, visibleSize.height / 2 + origin.y));
-    this->addChild(background, 0);
+  float bgScaleX = visibleSize.width / background->getContentSize().width;
+  float bgScaleY = visibleSize.height / background->getContentSize().height;
+  background->setScale(bgScaleX, bgScaleY);
+  background->setPosition(Vec2(visibleSize.width / 2 + origin.x,
+                               visibleSize.height / 2 + origin.y));
+  this->addChild(background, 0);
 
-    // ±êÌâ
-    auto titleLabel = Label::createWithSystemFont("Ñ¡ÔñµØÍ¼", "Microsoft YaHei", 72);
-    titleLabel->setTextColor(Color4B::YELLOW);
-    titleLabel->setPosition(Vec2(visibleSize.width / 2 + origin.x,
-        visibleSize.height - 100));
-    this->addChild(titleLabel, 1);
+  // æ ‡é¢˜
+  auto titleLabel =
+      Label::createWithSystemFont("é€‰æ‹©åœ°å›¾", "Microsoft YaHei", 72);
+  titleLabel->setTextColor(Color4B::YELLOW);
+  titleLabel->setPosition(
+      Vec2(visibleSize.width / 2 + origin.x, visibleSize.height - 100));
+  this->addChild(titleLabel, 1);
 
-    // µØÍ¼1Ñ¡Ôñ°´Å¥
-    auto map1Button = ui::Button::create("preview1.png");
-    if (!map1Button) {
-        map1Button = ui::Button::create("button_normal.png");
-        auto map1Label = Label::createWithSystemFont("µØÍ¼1", "Microsoft YaHei", 36);
-        map1Label->setPosition(map1Button->getContentSize() / 2);
-        map1Button->addChild(map1Label);
-    }
+  // åœ°å›¾1é€‰æ‹©æŒ‰é’®
+  auto map1Button = ui::Button::create("preview1.png");
+  if (!map1Button) {
+    map1Button = ui::Button::create("button_normal.png");
+    auto map1Label =
+        Label::createWithSystemFont("åœ°å›¾1", "Microsoft YaHei", 36);
+    map1Label->setPosition(map1Button->getContentSize() / 2);
+    map1Button->addChild(map1Label);
+  }
 
-    map1Button->setScale(0.3f);
-    map1Button->setPosition(Vec2(visibleSize.width / 2 - 200, visibleSize.height / 2 + 50));
-    map1Button->addTouchEventListener([&](Ref* sender, ui::Widget::TouchEventType type) {
-        if (type == ui::Widget::TouchEventType::ENDED)
-        {
-            selectMap1Callback(sender);
+  map1Button->setScale(0.3f);
+  map1Button->setPosition(
+      Vec2(visibleSize.width / 2 - 200, visibleSize.height / 2 + 50));
+  map1Button->addTouchEventListener(
+      [&](Ref* sender, ui::Widget::TouchEventType type) {
+        if (type == ui::Widget::TouchEventType::ENDED) {
+          selectMap1Callback(sender);
         }
-        });
-    this->addChild(map1Button, 1);
+      });
+  this->addChild(map1Button, 1);
 
-    // µØÍ¼1Ãû³Æ±êÇ©
-    auto map1Name = Label::createWithSystemFont("É³Ä®µØÍ¼", "Microsoft YaHei", 36);
-    map1Name->setPosition(Vec2(visibleSize.width / 2 - 200, visibleSize.height / 2 - 100));
-    this->addChild(map1Name, 1);
+  // åœ°å›¾1åç§°æ ‡ç­¾
+  auto map1Name =
+      Label::createWithSystemFont("æ²™æ¼ åœ°å›¾", "Microsoft YaHei", 36);
+  map1Name->setPosition(
+      Vec2(visibleSize.width / 2 - 200, visibleSize.height / 2 - 100));
+  this->addChild(map1Name, 1);
 
-    // µØÍ¼2Ñ¡Ôñ°´Å¥
-    auto map2Button = ui::Button::create("preview2.png");
-    if (!map2Button) {
-        map2Button = ui::Button::create("button_normal.png");
-        auto map2Label = Label::createWithSystemFont("µØÍ¼2", "Microsoft YaHei", 36);
-        map2Label->setPosition(map2Button->getContentSize() / 2);
-        map2Button->addChild(map2Label);
-    }
+  // åœ°å›¾2é€‰æ‹©æŒ‰é’®
+  auto map2Button = ui::Button::create("preview2.png");
+  if (!map2Button) {
+    map2Button = ui::Button::create("button_normal.png");
+    auto map2Label =
+        Label::createWithSystemFont("åœ°å›¾2", "Microsoft YaHei", 36);
+    map2Label->setPosition(map2Button->getContentSize() / 2);
+    map2Button->addChild(map2Label);
+  }
 
-    map2Button->setScale(0.3f);
-    map2Button->setPosition(Vec2(visibleSize.width / 2 + 200, visibleSize.height / 2 + 50));
-    map2Button->addTouchEventListener([&](Ref* sender, ui::Widget::TouchEventType type) {
-        if (type == ui::Widget::TouchEventType::ENDED)
-        {
-            selectMap2Callback(sender);
+  map2Button->setScale(0.3f);
+  map2Button->setPosition(
+      Vec2(visibleSize.width / 2 + 200, visibleSize.height / 2 + 50));
+  map2Button->addTouchEventListener(
+      [&](Ref* sender, ui::Widget::TouchEventType type) {
+        if (type == ui::Widget::TouchEventType::ENDED) {
+          selectMap2Callback(sender);
         }
-        });
-    this->addChild(map2Button, 1);
+      });
+  this->addChild(map2Button, 1);
 
-    // µØÍ¼2Ãû³Æ±êÇ©
-    auto map2Name = Label::createWithSystemFont("´ÔÁÖµØÍ¼", "Microsoft YaHei", 36);
-    map2Name->setPosition(Vec2(visibleSize.width / 2 + 200, visibleSize.height / 2 - 100));
-    this->addChild(map2Name, 1);
+  // åœ°å›¾2åç§°æ ‡ç­¾
+  auto map2Name =
+      Label::createWithSystemFont("ä¸›æž—åœ°å›¾", "Microsoft YaHei", 36);
+  map2Name->setPosition(
+      Vec2(visibleSize.width / 2 + 200, visibleSize.height / 2 - 100));
+  this->addChild(map2Name, 1);
 
-    // ·µ»Ø°´Å¥
-    auto returnButton = ui::Button::create("return_button.png");
-    if (!returnButton) {
-        returnButton = ui::Button::create("button_normal.png");
-        auto returnLabel = Label::createWithSystemFont("·µ»Ø", "Microsoft YaHei", 24);
-        returnLabel->setPosition(returnButton->getContentSize() / 2);
-        returnButton->addChild(returnLabel);
-    }
+  // è¿”å›žæŒ‰é’®
+  auto returnButton = ui::Button::create("return_button.png");
+  if (!returnButton) {
+    returnButton = ui::Button::create("button_normal.png");
+    auto returnLabel =
+        Label::createWithSystemFont("è¿”å›ž", "Microsoft YaHei", 24);
+    returnLabel->setPosition(returnButton->getContentSize() / 2);
+    returnButton->addChild(returnLabel);
+  }
 
-    returnButton->setScale(0.3f);
-    returnButton->setPosition(Vec2(100, 100));
-    returnButton->addTouchEventListener([&](Ref* sender, ui::Widget::TouchEventType type) {
-        if (type == ui::Widget::TouchEventType::ENDED)
-        {
-            menuReturnCallback(sender);
+  returnButton->setScale(0.3f);
+  returnButton->setPosition(Vec2(100, 100));
+  returnButton->addTouchEventListener(
+      [&](Ref* sender, ui::Widget::TouchEventType type) {
+        if (type == ui::Widget::TouchEventType::ENDED) {
+          menuReturnCallback(sender);
         }
-        });
-    this->addChild(returnButton, 1);
+      });
+  this->addChild(returnButton, 1);
 
-    return true;
+  return true;
 }
 
-void MapSelectScene::selectMap1Callback(Ref* pSender)
-{
-    auto userDefault = UserDefault::getInstance();
-    userDefault->setStringForKey("selected_map", "map1.tmx"); 
-    userDefault->flush();
+void MapSelectScene::selectMap1Callback(Ref* pSender) {
+  auto userDefault = UserDefault::getInstance();
+  userDefault->setStringForKey("selected_map", "map1.tmx");
+  userDefault->flush();
 
-    Director::getInstance()->replaceScene(TransitionFade::create(0.5f, MapScene::createScene()));
+  Director::getInstance()->replaceScene(
+      TransitionFade::create(0.5f, MapScene::createScene()));
 }
 
-void MapSelectScene::selectMap2Callback(Ref* pSender)
-{
-    auto userDefault = UserDefault::getInstance();
-    userDefault->setStringForKey("selected_map", "map2.tmx"); 
-    userDefault->flush();
+void MapSelectScene::selectMap2Callback(Ref* pSender) {
+  auto userDefault = UserDefault::getInstance();
+  userDefault->setStringForKey("selected_map", "map2.tmx");
+  userDefault->flush();
 
-    Director::getInstance()->replaceScene(TransitionFade::create(0.5f, MapScene::createScene()));
+  Director::getInstance()->replaceScene(
+      TransitionFade::create(0.5f, MapScene::createScene()));
 }
 
-void MapSelectScene::menuReturnCallback(Ref* pSender)
-{
-    Director::getInstance()->replaceScene(TransitionFade::create(0.5f, StartScene::createScene()));
+void MapSelectScene::menuReturnCallback(Ref* pSender) {
+  Director::getInstance()->replaceScene(
+      TransitionFade::create(0.5f, StartScene::createScene()));
 }

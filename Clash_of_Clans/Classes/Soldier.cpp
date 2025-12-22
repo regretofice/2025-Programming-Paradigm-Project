@@ -312,17 +312,19 @@ void Soldier::update(float dt) {
   }
 }
 Building* Soldier::findBestTargetBuilding() {
-  auto scene = cocos2d::Director::getInstance()->getRunningScene();
-  if (!scene) return nullptr;
+  // 不要直接用 runningScene，而是搜索士兵所在的父节点（MapScene层）
+  auto parent = this->getParent();
+  if (!parent) return nullptr;
 
   Building* best = nullptr;
   float bestDist = FLT_MAX;
   auto myPos = getPosition();
 
-  for (auto child : scene->getChildren()) {
+  //  在父节点（MapScene）的子节点中遍历，这样才能找到建筑
+  for (auto child : parent->getChildren()) {
     auto b = dynamic_cast<Building*>(child);
     if (!b || b->isDestroyed()) continue;
-    // 如果有阵营判断，这里也过滤一下 isEnemy(...)
+
     float d = myPos.distance(b->getPosition());
     if (d < bestDist) {
       bestDist = d;

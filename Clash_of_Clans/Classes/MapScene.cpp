@@ -12,38 +12,38 @@
 
 USING_NS_CC;
 
-Scene* MapScene::createScene() 
-{  // 默认使用UserDefault中保存的地图，如果没有则使用map2.tmx
-    auto userDefault = UserDefault::getInstance();
-    std::string mapFile = userDefault->getStringForKey("selected_map", "map2.tmx");
+Scene* MapScene::
+    createScene() {  // 默认使用UserDefault中保存的地图，如果没有则使用map2.tmx
+  auto userDefault = UserDefault::getInstance();
+  std::string mapFile =
+      userDefault->getStringForKey("selected_map", "map2.tmx");
 
-    return createSceneWithMap(mapFile);
+  return createSceneWithMap(mapFile);
 }
 
 Scene* MapScene::createSceneWithMap(const std::string& mapFile) {
-    auto scene = Scene::create();
-    auto layer = MapScene::create();
-    if (layer) {
-        layer->_mapFileName = mapFile;
-        scene->addChild(layer);
-    }
-    return scene;
+  auto scene = Scene::create();
+  auto layer = MapScene::create();
+  if (layer) {
+    layer->_mapFileName = mapFile;
+    scene->addChild(layer);
+  }
+  return scene;
 }
 void MapScene::createMap() {
- // 加载TMX地图文件
+  // 加载TMX地图文件
   auto visibleSize = Director::getInstance()->getVisibleSize();
   Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
   // 如果_mapFileName为空，则从UserDefault获取
   if (_mapFileName.empty()) {
-      auto userDefault = UserDefault::getInstance();
-      _mapFileName = userDefault->getStringForKey("selected_map", "map2.tmx");
+    auto userDefault = UserDefault::getInstance();
+    _mapFileName = userDefault->getStringForKey("selected_map", "map2.tmx");
   }
 
   // 加载TMX地图文件
   _tileMap = TMXTiledMap::create(_mapFileName);
   // 获取地图信息
-
 
   _mapWidth = static_cast<int>(_tileMap->getMapSize().width);
   _mapHeight = static_cast<int>(_tileMap->getMapSize().height);
@@ -117,7 +117,8 @@ bool MapScene::init() {
 
   _previewMapPosition = Vec2::ZERO;  // 初始化预览位置
 
-  SpriteFrameCache::getInstance()->addSpriteFramesWithFile("rarbarian.plist");
+  SpriteFrameCache::getInstance()->addSpriteFramesWithFile(
+      "rarbarian_idle.plist");
   CCLOG("Loaded rarbarian.plist");
   return true;
 }
@@ -155,13 +156,13 @@ void MapScene::createPlacementMenu() {
   menuPanel->addChild(towerBtn);
 
   // 士兵按钮1 - 野蛮人
-  auto barbarianBtn = ui::Button::create("barbarian_icon.png");
-  barbarianBtn->setPosition(Vec2(60, visibleSize.height - 220));
-  barbarianBtn->setScale(0.8f);
-  barbarianBtn->addClickEventListener([this](Ref* sender) {
+  auto rarbarianBtn = ui::Button::create("rarbarian_icon.png");
+  rarbarianBtn->setPosition(Vec2(60, visibleSize.height - 220));
+  rarbarianBtn->setScale(0.8f);
+  rarbarianBtn->addClickEventListener([this](Ref* sender) {
     onSoldierButtonClicked(sender, 1);  // 1代表野蛮人
   });
-  menuPanel->addChild(barbarianBtn);
+  menuPanel->addChild(rarbarianBtn);
 
   // 取消按钮
   auto cancelBtn = ui::Button::create("cancel_icon.png");
