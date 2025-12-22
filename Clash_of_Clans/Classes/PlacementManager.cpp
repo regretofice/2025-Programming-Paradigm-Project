@@ -286,6 +286,13 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
 
       // 注册到活跃士兵列表
       activeSoldiers.push_back(soldier);
+      // 放下后立即开始自动寻路 + 移动
+      Building* target = soldier->findBestTargetBuilding();  // 若你已经实现了
+      if (target) {
+        soldier->setTargetBuilding(target);
+        soldier->recalculatePathTo(target);
+        soldier->moveToNextPathPoint();
+      }
 
       CCLOG("Soldier placed at tile (%d,%d), radius=%.1f", tileX, tileY,
             soldierRadius);

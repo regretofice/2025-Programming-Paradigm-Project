@@ -12,8 +12,8 @@ void GroundSoldier::moveTo(const Vec2& targetPos, int speed) {
     CCLOG("地面单位：路径穿过建筑，计算绕行路径！");
     // 计算绕行路径
     calculateDetourPath(startPos, targetPos);
-    if (!path_points_.empty()) {
-      current_path_index_ = 0;
+    if (!pathTiles_.empty()) {
+      currentPathIndex_ = 0;
       moveToNextPathPoint();
     }
     return;
@@ -23,7 +23,7 @@ void GroundSoldier::moveTo(const Vec2& targetPos, int speed) {
   Soldier::moveTo(targetPos, speed);
 }
 
-// 新增：检查路径是否穿过建筑
+// 检查路径是否穿过建筑
 bool GroundSoldier::checkPathCrossBuilding(const Vec2& start, const Vec2& end) {
   // 实现建筑碰撞检测逻辑
   // 1. 获取所有建筑
@@ -31,15 +31,15 @@ bool GroundSoldier::checkPathCrossBuilding(const Vec2& start, const Vec2& end) {
   return false;  // 临时返回false
 }
 
-// 新增：计算绕行路径
+// 计算绕行路径
 void GroundSoldier::calculateDetourPath(const Vec2& start, const Vec2& end) {
   // 实现简单的绕行算法
-  path_points_.clear();
-  path_points_.push_back(start);
+  pathTiles_.clear();
+  pathTiles_.push_back(start);
 
   // 可以添加中间点实现简单绕行
   Vec2 midPoint = Vec2((start.x + end.x) / 2, (start.y + end.y) / 2 + 50);
-  path_points_.push_back(midPoint);
+  pathTiles_.push_back(midPoint);
 
-  path_points_.push_back(end);
+  pathTiles_.push_back(end);
 }

@@ -14,6 +14,10 @@ class PlacementManager {
   static PlacementManager* getInstance();
   static void destroyInstance();
 
+  float getTileSize() const { return _tileSize; }
+  int getMapWidth() const { return _mapWidth; }
+  int getMapHeight() const { return _mapHeight; }
+
   // 初始化：把地图的网格信息告诉它
   void initGrid(int mapWidth, int mapHeight, float tileSize, float mapOffsetX,
                 float mapOffsetY, float mapScale);
@@ -35,6 +39,9 @@ class PlacementManager {
                            cocos2d::Node* parentScene);
 
   void removeSoldier(Soldier* soldier);
+
+  cocos2d::Vec2 worldToTile(const cocos2d::Vec2& worldPos) const;
+  cocos2d::Vec2 tileToWorldCenter(float tileX, float tileY) const;
 
  private:
   PlacementManager();
@@ -65,8 +72,7 @@ class PlacementManager {
   float getSoldierRadius(int soldierType) const;
 
   // 内部工具函数
-  cocos2d::Vec2 worldToTile(const cocos2d::Vec2& worldPos) const;
-  cocos2d::Vec2 tileToWorldCenter(float tileX, float tileY) const;
+
   bool canPlaceAt(int baseX, int baseY, int sizeInTiles) const;
   void occupyGrid(int baseX, int baseY, int sizeInTiles);
 

@@ -4,7 +4,7 @@
     <dict>
         <key>frames</key>
         <dict>
-            <key>rarbarian_idle_01.png</key>
+            <key>rarbarian_move_01.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -29,13 +29,13 @@
             <key>premultiplyAlpha</key>
             <false/>
             <key>realTextureFileName</key>
-            <string>rarbarian_idle.png</string>
+            <string>rarbarian_move.png</string>
             <key>size</key>
             <string>{66,91}</string>
             <key>smartupdate</key>
-            <string>$TexturePacker:SmartUpdate:9ee0ff4741fa4660f66761a752f3dfff:52f6e729fc9f7a682c2e052cc2ebe880:c74fe870bd1ab574c824a3f3d7e84e5d$</string>
+            <string>$TexturePacker:SmartUpdate:743d578544e1783555931a7f117c7d35:52f6e729fc9f7a682c2e052cc2ebe880:752451e6b2e97e802421da70cf0c095e$</string>
             <key>textureFileName</key>
-            <string>rarbarian_idle.png</string>
+            <string>rarbarian_move.png</string>
         </dict>
     </dict>
 </plist>

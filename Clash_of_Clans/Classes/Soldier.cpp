@@ -1,11 +1,11 @@
 ﻿#include "Soldier.h"
 
+#include "GridPathFinder.h"
 #include "PlacementManager.h"
 bool Soldier::init(int hp, int attack, int attack_range, int attack_CD) {
-  // if (!Sprite::init()) {
-  //   return false;
-  // }
-  if (!Sprite::initWithFile("rarbarian_idle_01.png")) return false;
+  if (!Sprite::initWithFile("rarbarian_icon.png")) {
+    return false;
+  }
   // 初始化核心属性
   hp_ = hp;
   attack_ = attack;
@@ -172,53 +172,118 @@ void Soldier::attackBuilding(Building* target) {
       Sequence::create(DelayTime::create(0.5f), attackHitCallBack, nullptr));
 }
 
-void Soldier::calculatePath(const Vec2& targetPos) {
-  // 简单的直线路径（实际项目中应替换为A*等寻路算法）
-  path_points_.clear();
-  current_path_index_ = 0;
+void Soldier::recalculatePathTo(Building* target) {
+  if (!target) return;
 
-  // 添加起点和终点
-  path_points_.push_back(getPosition());
-  path_points_.push_back(targetPos);
-}
+  auto pm = PlacementManager::getInstance();
+  Vec2 startTile = pm->worldToTile(getPosition());
+  Vec2 goalTile = pm->worldToTile(target->getPosition());
 
-void Soldier::startAutoAttack(Building* target) {
-  if (!target || target->isDestroyed()) return;
+  int sx = (int)startTile.x;
+  int sy = (int)startTile.y;
+  int gx = (int)goalTile.x;
+  int gy = (int)goalTile.y;
 
-  setTargetBuilding(target);
-  calculatePath(target->getPosition());
-  current_path_index_ = 0;
+  int mapW = pm->getMapWidth();
+  int mapH = pm->getMapHeight();
+  GridPathFinder finder(mapW, mapH);
 
-  // 开始移动到第一个路径点
-  if (!path_points_.empty()) {
-    moveToNextPathPoint();
+  // 1. 先假定所有格子都可走
+  for (int x = 0; x < mapW; ++x) {
+    for (int y = 0; y < mapH; ++y) {
+      finder.setWalkable(x, y, true);
+    }
   }
+
+  // 2. 遍历场景中的建筑，用碰撞半径“画”出不可走区域
+  auto scene = cocos2d::Director::getInstance()->getRunningScene();
+  if (scene) {
+    float myRadius = getCollisionRadius();
+
+    for (auto child : scene->getChildren()) {
+      auto building = dynamic_cast<Building*>(child);
+      if (!building || building->isDestroyed()) continue;
+
+      float bRadius = building->getCollisionRadius();
+      float blockRadius = bRadius;
+
+      // 以建筑为圆心，在一定范围内枚举所有 tile
+      cocos2d::Vec2 bWorldPos = building->getPosition();
+      cocos2d::Vec2 bTilePos = pm->worldToTile(bWorldPos);
+      int bx = (int)bTilePos.x;
+      int by = (int)bTilePos.y;
+
+      int maxTileOffset = (int)std::ceil(
+          blockRadius /
+          pm->getTileSize());  // 需要在PlacementManager里加个getTileSize()
+
+      for (int dx = -maxTileOffset; dx <= maxTileOffset; ++dx) {
+        for (int dy = -maxTileOffset; dy <= maxTileOffset; ++dy) {
+          int tx = bx + dx;
+          int ty = by + dy;
+          if ((tx == sx && ty == sy) || (tx == gx && ty == gy)) {
+            continue;  // 起点或终点，不标记为障碍
+          }
+          if (tx < 0 || tx >= mapW || ty < 0 || ty >= mapH) continue;
+
+          // 把 tile 中心转换到世界坐标，检查与建筑碰撞圆是否重叠
+          cocos2d::Vec2 tileWorld = pm->tileToWorldCenter((float)tx, (float)ty);
+          float dist = tileWorld.distance(bWorldPos);
+          if (dist < blockRadius) {
+            // 该格子对当前士兵来说是不可走的
+            finder.setWalkable(tx, ty, false);
+          }
+        }
+      }
+    }
+  }
+  // 3. 用生成好的阻挡网格跑 A*
+  bool ok;
+  std::vector<cocos2d::Vec2> tiles;
+  std::tuple<bool, std::vector<cocos2d::Vec2>> result =
+      finder.findPath(sx, sy, gx, gy);
+  ok = std::get<0>(result);
+  tiles = std::get<1>(result);
+  pathTiles_.clear();
+  if (!ok) {
+    CCLOG("No path found from (%d,%d) to (%d,%d)", sx, sy, gx, gy);
+    return;
+  }
+  CCLOG("Path tiles size = %d", (int)tiles.size());
+  for (size_t i = 0; i < tiles.size(); ++i) {
+    CCLOG("  step %d: (%.0f, %.0f)", (int)i, tiles[i].x, tiles[i].y);
+  }
+
+  pathTiles_ = tiles;  // tiles 里是 tile 坐标
+  currentPathIndex_ = 0;
 }
 
 // 新增：移动到下一个路径点
 void Soldier::moveToNextPathPoint() {
-  if (current_path_index_ >= path_points_.size() - 1) {
-    // 到达最后一个点，开始攻击
+  if (currentPathIndex_ >= (int)pathTiles_.size()) {
+    // 走到终点：开始攻击或停下
     if (target_building_ && !target_building_->isDestroyed()) {
       attackBuilding(target_building_);
+    } else {
+      changeState(SoldierState::kIdle);
     }
     return;
   }
 
-  current_path_index_++;
-  Vec2 nextPos = path_points_[current_path_index_];
+  auto pm = PlacementManager::getInstance();
+  Vec2 tile = pathTiles_[currentPathIndex_];
+  Vec2 worldPos = pm->tileToWorldCenter(tile.x, tile.y);
 
-  // 移动到下一个点，完成后继续移动
+  currentPathIndex_++;
+
   changeState(SoldierState::kMove);
-
-  float distance = getPosition().distance(nextPos);
+  float distance = getPosition().distance(worldPos);
   float moveTime = distance / speed_;
 
-  MoveTo* moveAction = MoveTo::create(moveTime, nextPos);
-  CallFunc* moveEndCallBack =
-      CallFunc::create([=]() { moveToNextPathPoint(); });
+  auto moveAction = MoveTo::create(moveTime, worldPos);
+  auto callback = CallFunc::create([this]() { this->moveToNextPathPoint(); });
 
-  runAction(Sequence::create(moveAction, moveEndCallBack, nullptr));
+  runAction(Sequence::create(moveAction, callback, nullptr));
 }
 void Soldier::setSpeed(float speed) { speed_ = speed; }
 void Soldier::createPhysicsBody(float radius) {
@@ -245,4 +310,24 @@ void Soldier::update(float dt) {
       }
     }
   }
+}
+Building* Soldier::findBestTargetBuilding() {
+  auto scene = cocos2d::Director::getInstance()->getRunningScene();
+  if (!scene) return nullptr;
+
+  Building* best = nullptr;
+  float bestDist = FLT_MAX;
+  auto myPos = getPosition();
+
+  for (auto child : scene->getChildren()) {
+    auto b = dynamic_cast<Building*>(child);
+    if (!b || b->isDestroyed()) continue;
+    // 如果有阵营判断，这里也过滤一下 isEnemy(...)
+    float d = myPos.distance(b->getPosition());
+    if (d < bestDist) {
+      bestDist = d;
+      best = b;
+    }
+  }
+  return best;
 }

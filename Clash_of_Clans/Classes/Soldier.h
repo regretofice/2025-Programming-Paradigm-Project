@@ -65,12 +65,13 @@ class Soldier : public Sprite {
   // 攻击建筑
   virtual void attackBuilding(Building* target);
 
+  // 寻找优先级最高的建筑
+  Building* findBestTargetBuilding();
   // 设置目标建筑
   void setTargetBuilding(Building* building) { target_building_ = building; }
-
-  // 自动寻路到目标并攻击
-  virtual void startAutoAttack(Building* target);
-
+  // 计算到目标的路径
+  void recalculatePathTo(Building* target);
+  // 移动到目标建筑
   void moveToNextPathPoint();
 
   ////////////////////
@@ -109,15 +110,12 @@ class Soldier : public Sprite {
   // 停止当前所有动画和动作
   void stopAllStateActions() { stopAllActions(); };
 
-  // 新增：路径点列表
-  std::vector<Vec2> path_points_;
-  // 新增：当前路径点索引
-  int current_path_index_;
-  // 新增：目标建筑
+  // 路径点列表
+  std::vector<Vec2> pathTiles_;
+  // 当前路径点索引
+  int currentPathIndex_;
+  // 目标建筑
   Building* target_building_;
-
-  // 新增：计算到目标的路径
-  virtual void calculatePath(const Vec2& targetPos);
 
  private:
   int hp_;                      // 士兵血量
