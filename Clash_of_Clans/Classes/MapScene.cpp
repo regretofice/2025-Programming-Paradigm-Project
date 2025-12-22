@@ -137,6 +137,13 @@ void MapScene::createPlacementMenu() {
   menuPanel->setPosition(Vec2(origin.x, origin.y));
   this->addChild(menuPanel, 90);
 
+  auto menuPanel2 = ui::Layout::create();
+  menuPanel2->setContentSize(Size(120, visibleSize.height));
+  menuPanel2->setBackGroundColorType(
+      ui::Layout::BackGroundColorType::SOLID);         // 设置背景类型为纯色
+  menuPanel2->setBackGroundColor(Color3B(50, 50, 50));  // 修正函数名大小写
+  menuPanel2->setPosition(Vec2(origin.x + 1800, origin.y));
+  this->addChild(menuPanel2, 90);
   // 建筑按钮1 - 金矿
   auto goldMineBtn = ui::Button::create("gold_mine_icon.png");
   goldMineBtn->setPosition(Vec2(60, visibleSize.height - 60));
@@ -162,7 +169,7 @@ void MapScene::createPlacementMenu() {
   rarbarianBtn->addClickEventListener([this](Ref* sender) {
     onSoldierButtonClicked(sender, 1);  // 1代表野蛮人
   });
-  menuPanel->addChild(rarbarianBtn);
+  menuPanel2->addChild(rarbarianBtn);
 
   // 取消按钮
   auto cancelBtn = ui::Button::create("cancel_icon.png");
