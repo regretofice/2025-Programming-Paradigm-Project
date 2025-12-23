@@ -1,9 +1,12 @@
 ﻿#include "Soldier.h"
 
+#include "BuildingManager.h"
 #include "GridPathFinder.h"
 #include "PlacementManager.h"
-bool Soldier::init(int hp, int attack, int attack_range, int attack_CD) {
-  if (!Sprite::initWithFile("rarbarian_icon.png")) {
+bool Soldier::init(const std::string& texPath, int hp, int attack,
+                   int attack_range, int attack_CD) {
+  if (!Sprite::initWithFile(texPath)) {
+    CCLOG("can't open the file to create soldier");
     return false;
   }
   // 初始化核心属性
@@ -192,44 +195,46 @@ void Soldier::recalculatePathTo(Building* target) {
       finder.setWalkable(x, y, true);
     }
   }
+  if (getSoldierMoveType() == SoldierMoveType::kGround) {
+    // 2. 遍历场景中的建筑，用碰撞半径“画”出不可走区域(只有走在地面上的人要判断)
+    auto scene = cocos2d::Director::getInstance()->getRunningScene();
+    if (scene) {
+      float myRadius = getCollisionRadius();
 
-  // 2. 遍历场景中的建筑，用碰撞半径“画”出不可走区域
-  auto scene = cocos2d::Director::getInstance()->getRunningScene();
-  if (scene) {
-    float myRadius = getCollisionRadius();
+      for (auto child : scene->getChildren()) {
+        auto building = dynamic_cast<Building*>(child);
+        if (!building || building->isDestroyed()) continue;
 
-    for (auto child : scene->getChildren()) {
-      auto building = dynamic_cast<Building*>(child);
-      if (!building || building->isDestroyed()) continue;
+        float bRadius = building->getCollisionRadius();
+        float blockRadius = bRadius + myRadius + 10.0f;
 
-      float bRadius = building->getCollisionRadius();
-      float blockRadius = bRadius + myRadius + 10.0f;
+        // 以建筑为圆心，在一定范围内枚举所有 tile
+        cocos2d::Vec2 bWorldPos = building->getPosition();
+        cocos2d::Vec2 bTilePos = pm->worldToTile(bWorldPos);
+        int bx = (int)bTilePos.x;
+        int by = (int)bTilePos.y;
 
-      // 以建筑为圆心，在一定范围内枚举所有 tile
-      cocos2d::Vec2 bWorldPos = building->getPosition();
-      cocos2d::Vec2 bTilePos = pm->worldToTile(bWorldPos);
-      int bx = (int)bTilePos.x;
-      int by = (int)bTilePos.y;
+        int maxTileOffset = (int)std::ceil(
+            blockRadius /
+            pm->getTileSize());  // 需要在PlacementManager里加个getTileSize()
 
-      int maxTileOffset = (int)std::ceil(
-          blockRadius /
-          pm->getTileSize());  // 需要在PlacementManager里加个getTileSize()
+        for (int dx = -maxTileOffset; dx <= maxTileOffset; ++dx) {
+          for (int dy = -maxTileOffset; dy <= maxTileOffset; ++dy) {
+            int tx = bx + dx;
+            int ty = by + dy;
+            if ((tx == sx && ty == sy) || (tx == gx && ty == gy)) {
+              continue;  // 起点或终点，不标记为障碍
+            }
+            if (tx < 0 || tx >= mapW || ty < 0 || ty >= mapH) continue;
 
-      for (int dx = -maxTileOffset; dx <= maxTileOffset; ++dx) {
-        for (int dy = -maxTileOffset; dy <= maxTileOffset; ++dy) {
-          int tx = bx + dx;
-          int ty = by + dy;
-          if ((tx == sx && ty == sy) || (tx == gx && ty == gy)) {
-            continue;  // 起点或终点，不标记为障碍
-          }
-          if (tx < 0 || tx >= mapW || ty < 0 || ty >= mapH) continue;
-
-          // 把 tile 中心转换到世界坐标，检查与建筑碰撞圆是否重叠
-          cocos2d::Vec2 tileWorld = pm->tileToWorldCenter((float)tx, (float)ty);
-          float dist = tileWorld.distance(bWorldPos);
-          if (dist < blockRadius) {
-            // 该格子对当前士兵来说是不可走的
-            finder.setWalkable(tx, ty, false);
+            // 把 tile 中心转换到世界坐标，检查与建筑碰撞圆是否重叠
+            cocos2d::Vec2 tileWorld =
+                pm->tileToWorldCenter((float)tx, (float)ty);
+            float dist = tileWorld.distance(bWorldPos);
+            if (dist < blockRadius) {
+              // 该格子对当前士兵来说是不可走的
+              finder.setWalkable(tx, ty, false);
+            }
           }
         }
       }
@@ -320,12 +325,12 @@ void Soldier::update(float dt) {
   Vec2 myPos = this->getPosition();
   float myRadius = this->getCollisionRadius();
   Vec2 totalCorrection(0, 0);
+  auto pm = PlacementManager ::getInstance();
 
-  for (auto child : this->getParent()->getChildren()) {
-    if (child == this || !child->isVisible()) continue;
+  for (auto otherSoldier : pm->getSoldiers()) {
+    if (otherSoldier == this || !otherSoldier->isVisible()) continue;
 
     // 仅保留士兵间的挤开，防止叠罗汉
-    auto otherSoldier = dynamic_cast<Soldier*>(child);
     if (otherSoldier && !otherSoldier->isDead()) {
       float dist = myPos.distance(otherSoldier->getPosition());
       float minDist = myRadius + otherSoldier->getCollisionRadius();
@@ -370,23 +375,19 @@ void Soldier::update(float dt) {
 }
 
 Building* Soldier::findBestTargetBuilding() {
-  // 不要直接用 runningScene，而是搜索士兵所在的父节点（MapScene层）
-  auto parent = this->getParent();
-  if (!parent) return nullptr;
-
+  auto buildings = BuildingManager ::getInstance()->getAllBuildings();
+  if (buildings.empty()) return nullptr;
   Building* best = nullptr;
   float bestDist = FLT_MAX;
   auto myPos = getPosition();
 
-  //  在父节点（MapScene）的子节点中遍历，这样才能找到建筑
-  for (auto child : parent->getChildren()) {
-    auto b = dynamic_cast<Building*>(child);
-    if (!b || b->isDestroyed()) continue;
+  for (auto building : buildings) {
+    if (!building || building->isDestroyed()) continue;
 
-    float d = myPos.distance(b->getPosition());
-    if (d < bestDist) {
-      bestDist = d;
-      best = b;
+    float dist = myPos.distance(building->getPosition());
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = building;
     }
   }
   return best;

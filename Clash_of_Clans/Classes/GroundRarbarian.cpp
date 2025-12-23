@@ -17,7 +17,8 @@ Rarbarian* Rarbarian::create(int hp, int attack, int attackrange,
 }
 
 bool Rarbarian::init(int hp, int attack, int attack_range, int attack_CD) {
-  if (!GroundSoldier::init(hp, attack, attack_range, attack_CD)) {
+  if (!Soldier::init("rarbarian_icon.png", hp, attack, attack_range,
+                     attack_CD)) {
     return false;
   }
 
@@ -96,13 +97,13 @@ void Rarbarian::playDieAnimation() {
 }
 
 void Rarbarian::takeDamage(int damage) {
-  GroundSoldier::takeDamage(damage);
+  Soldier::takeDamage(damage);
   // 可添加受击特效逻辑
 }
 
 void Rarbarian::attackSoldier(Soldier* target) {
   if (!target) return;
-  GroundSoldier::attackSoldier(target);
+  Soldier::attackSoldier(target);
   // 可添加攻击特效逻辑
 }
 

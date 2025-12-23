@@ -26,8 +26,8 @@ enum class SoldierType {
   kAirBallonSoldier   // 天空-气球兵
 };
 enum class SoldierMoveType {
-	kAir,             // 空军
-	kGround           // 陆军
+  kAir,    // 空军
+  kGround  // 陆军
 };
 class Soldier : public Sprite {
  public:
@@ -106,7 +106,8 @@ class Soldier : public Sprite {
   Soldier() = default;
 
   // 士兵数值的初始化
-  bool init(int hp, int attack, int attack_range, int attack_CD);
+  bool init(const std::string& texPath, int hp, int attack, int attack_range,
+            int attack_CD);
 
   // 各状态的动画播放逻辑（纯虚函数，需要在子类中实现）
   virtual void playIdleAnimation() = 0;
