@@ -3,6 +3,7 @@
 
 #include "DefenseBuilding.h"
 #include "GroundRarbarian.h"
+#include "Groundbomberman.h"
 #include "PlayerDataManager.h"
 #include "ResourceBuilding.h"
 
@@ -147,7 +148,10 @@ void PlacementManager::createPreviewSprite(int buildingType, int soldierType,
     else if (buildingType == 2)
       texPath = "tower_icon.png";
   } else if (_currentType == PlacementType::SOLDIER) {
-    texPath = "rarbarian_icon.png";
+    if (soldierType == 1)
+      texPath = "rarbarian_icon.png";
+    else if (soldierType == 3)
+      texPath = "bomberman_icon.png";
   }
 
   _previewSprite = Sprite::create(texPath);
@@ -271,9 +275,14 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
 
     Vec2 placePos = tileToWorldCenter(tileX, tileY);
     CCLOG(">>> Try place soldier, type=%d", _currentId);
-    auto soldier =
-        Rarbarian::create(50, 10, 50, 1);  // GroundRarbarian.cpp 里的工厂函数
-    CCLOG(">>> Rarbarian created: %p", soldier);
+    Soldier* soldier = nullptr;
+    if (_currentId == 1) {
+      soldier = Rarbarian::create(50, 10, 50, 1);
+    } else if (_currentId == 3) {
+      soldier = Bomberman::create(30, 30, 10, 2);
+    }
+
+    CCLOG(">>> soldier created: %p", soldier);
 
     if (soldier) {
       // 设置位置、碰撞半径、激活检测
@@ -318,7 +327,6 @@ void PlacementManager::clearAll() {
   // 注意：这里不需要手动 delete 士兵/建筑，因为它们作为场景节点
   // 会在 replaceScene 时由 Cocos2d-x 的引用计数机制自动销毁。
   activeSoldiers.clear();
-
   // 2. 重置放置状态
   _currentType = PlacementType::NONE;
   if (_previewSprite) {

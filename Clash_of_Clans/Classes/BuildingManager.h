@@ -18,10 +18,10 @@ class BuildingManager {
   static void destroyInstance();
 
   // 添加建筑到管理器
-  void addBuilding(Building* building);
+  static void addBuilding(Building* building);
 
   // 从管理器中移除建筑（不负责销毁建筑本身）
-  void removeBuilding(Building* building);
+  static void removeBuilding(Building* building);
 
   // 销毁并移除建筑（同时释放内存）
   void destroyBuilding(Building* building);
@@ -59,7 +59,7 @@ class BuildingManager {
   BuildingManager& operator=(const BuildingManager&) = delete;
 
   // 存储所有建筑的容器
-  std::vector<Building*> _buildings;
+  static std::vector<Building*> _buildings;
 
   // 单例实例
   static BuildingManager* _instance;
