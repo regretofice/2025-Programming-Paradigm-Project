@@ -23,6 +23,7 @@ bool Rarbarian::init(int hp, int attack, int attack_range, int attack_CD) {
 
   // 初始化碰撞半径
   setCollisionRadius(30.0f);
+  createPhysicsBody(getCollisionRadius());
   // 设置移动速度
   setSpeed(120.0f);
   // 加载动画配置
@@ -35,22 +36,22 @@ void Rarbarian::loadAllAnimations() {
   SoldierAnimationConfig config;
 
   // Idle动画
-  config.idle.framePrefix = "rarbarian_idle_";
-  config.idle.frameCount = 1;  // rarbarian_idle_01.png
+  config.idle.framePrefix = "anim/rarbarian_idle_";
+  config.idle.frameCount = 3;  // rarbarian_idle_01.png
   config.idle.delayPerUnit = 0.1f;
 
   // Move动画
-  config.move.framePrefix = "rarbarian_move_";
+  config.move.framePrefix = "anim/rarbarian_move_";
   config.move.frameCount = 1;
   config.move.delayPerUnit = 0.08f;
 
   // Attack动画
-  config.attack.framePrefix = "rarbarian_attack_";
-  config.attack.frameCount = 1;
+  config.attack.framePrefix = "anim/rarbarian_attack_";
+  config.attack.frameCount = 3;
   config.attack.delayPerUnit = 0.12f;
 
   // Die动画
-  config.die.framePrefix = "rarbarian_die_";
+  config.die.framePrefix = "anim/rarbarian_die_";
   config.die.frameCount = 1;
   config.die.delayPerUnit = 0.1f;
 

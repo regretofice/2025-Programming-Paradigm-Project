@@ -107,6 +107,8 @@ bool MapScene::init() {
       Vec2(visibleSize.width - 80, visibleSize.height - 50));
   returnButton->addTouchEventListener(
       [&](Ref* sender, ui::Widget::TouchEventType type) {
+        auto pm = PlacementManager::getInstance();
+        pm->clearAll();
         if (type == ui::Widget::TouchEventType::ENDED) {
           // 保存建筑位置
           saveBuildingsPosition();
@@ -140,7 +142,7 @@ void MapScene::createPlacementMenu() {
   auto menuPanel2 = ui::Layout::create();
   menuPanel2->setContentSize(Size(120, visibleSize.height));
   menuPanel2->setBackGroundColorType(
-      ui::Layout::BackGroundColorType::SOLID);         // 设置背景类型为纯色
+      ui::Layout::BackGroundColorType::SOLID);          // 设置背景类型为纯色
   menuPanel2->setBackGroundColor(Color3B(50, 50, 50));  // 修正函数名大小写
   menuPanel2->setPosition(Vec2(origin.x + 1800, origin.y));
   this->addChild(menuPanel2, 90);

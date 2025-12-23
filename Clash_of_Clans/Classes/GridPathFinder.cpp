@@ -13,7 +13,13 @@ bool GridPathFinder::inBounds(int x, int y) const {
   return x >= 0 && x < m_cols && y >= 0 && y < m_rows;
 }
 
-int GridPathFinder::index(int x, int y) const { return y * m_cols + x; }
+int GridPathFinder::index(int x, int y) const {
+  if (x < 0 || x >= m_cols || y < 0 || y >= m_rows) {
+    // 如果越界，返回一个安全的错误值或触发警告而非崩溃
+    return 0;
+  }
+  return y * m_cols + x;
+}
 
 void GridPathFinder::setWalkable(int x, int y, bool walkable) {
   if (!inBounds(x, y)) return;

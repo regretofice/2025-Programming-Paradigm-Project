@@ -37,8 +37,10 @@ class PlacementManager {
 
   void createPreviewSprite(int buildingType, int soldierType,
                            cocos2d::Node* parentScene);
-
+  // 将士兵从ActiveSoldier中移除
   void removeSoldier(Soldier* soldier);
+  // 清空整个PlacementManager单例
+  void clearAll();
 
   cocos2d::Vec2 worldToTile(const cocos2d::Vec2& worldPos) const;
   cocos2d::Vec2 tileToWorldCenter(float tileX, float tileY) const;

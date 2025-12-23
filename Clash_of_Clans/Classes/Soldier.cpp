@@ -31,10 +31,11 @@ void Soldier::takeDamage(int damage) {
   hp_ -= damage;
   if (hp_ <= 0) {
     hp_ = 0;
-    enableAttackCD(false);            // 死亡后禁用冷却检测
+    enableAttackCD(false);  // 死亡后禁用冷却检测
+    this->stopAllActions();
     changeState(SoldierState::kDie);  // 切换为死亡状态
 
-    // 延迟回收到对象池
+    // 告诉活跃对象池，该士兵已死
     auto delay = DelayTime::create(2.0f);
     auto callback = CallFunc::create(
         [this]() { PlacementManager::getInstance()->removeSoldier(this); });
@@ -147,28 +148,25 @@ void Soldier::enableAttackCD(bool enable) {
   }
 }
 void Soldier::attackBuilding(Building* target) {
-  if (!target || isDead() || target->isDestroyed() || !is_attack_CD_ready_)
-    return;
+  if (!target || target->isDestroyed() || !is_attack_CD_ready_) return;
 
-  // 进入攻击冷却
   is_attack_CD_ready_ = false;
   attack_CD_remaining_ = attack_CD_;
   changeState(SoldierState::kAttack);
 
-  CallFunc* attackHitCallBack = CallFunc::create([=]() {
+  auto attackHitCallBack = CallFunc::create([this, target]() {
     if (target && !target->isDestroyed()) {
-      target->takeDamage(attack_);
-      CCLOG("对建筑造成%d伤害", attack_);
-
-      // 如果建筑被摧毁，回到 idle 状态
-      if (target->isDestroyed()) {
-        setTargetBuilding(nullptr);
-        changeState(SoldierState::kIdle);
-      }
+      target->takeDamage(this->attack_);
+      // 攻击完后切回 Idle，由 update() 根据 CD 决定何时发起下一次攻击
+      this->changeState(SoldierState::kIdle);
+    } else {
+      // 目标死了，找下一个
+      this->startAttack();
     }
   });
 
-  runAction(
+  // 假设动画时长 0.5s，伤害发生点也在 0.5s
+  this->runAction(
       Sequence::create(DelayTime::create(0.5f), attackHitCallBack, nullptr));
 }
 
@@ -179,10 +177,10 @@ void Soldier::recalculatePathTo(Building* target) {
   Vec2 startTile = pm->worldToTile(getPosition());
   Vec2 goalTile = pm->worldToTile(target->getPosition());
 
-  int sx = (int)startTile.x;
-  int sy = (int)startTile.y;
-  int gx = (int)goalTile.x;
-  int gy = (int)goalTile.y;
+  int sx = std::max(0, std::min((int)startTile.x, pm->getMapWidth() - 1));
+  int sy = std::max(0, std::min((int)startTile.y, pm->getMapHeight() - 1));
+  int gx = std::max(0, std::min((int)goalTile.x, pm->getMapWidth() - 1));
+  int gy = std::max(0, std::min((int)goalTile.y, pm->getMapHeight() - 1));
 
   int mapW = pm->getMapWidth();
   int mapH = pm->getMapHeight();
@@ -205,7 +203,7 @@ void Soldier::recalculatePathTo(Building* target) {
       if (!building || building->isDestroyed()) continue;
 
       float bRadius = building->getCollisionRadius();
-      float blockRadius = bRadius;
+      float blockRadius = bRadius + myRadius + 10.0f;
 
       // 以建筑为圆心，在一定范围内枚举所有 tile
       cocos2d::Vec2 bWorldPos = building->getPosition();
@@ -260,31 +258,54 @@ void Soldier::recalculatePathTo(Building* target) {
 
 // 新增：移动到下一个路径点
 void Soldier::moveToNextPathPoint() {
-  if (currentPathIndex_ >= (int)pathTiles_.size()) {
-    // 走到终点：开始攻击或停下
-    if (target_building_ && !target_building_->isDestroyed()) {
-      attackBuilding(target_building_);
-    } else {
-      changeState(SoldierState::kIdle);
-    }
+  // 1. 安全检查：如果自己死了，或者目标建筑已经不在了，重找目标
+  if (isDead()) return;
+
+  if (!target_building_ || target_building_->isDestroyed()) {
+    CCLOG("Target lost or destroyed, finding next...");
+    this->startAttack();  // startAttack 负责寻找新目标并重新开启寻路
     return;
   }
 
-  auto pm = PlacementManager::getInstance();
-  Vec2 tile = pathTiles_[currentPathIndex_];
-  Vec2 worldPos = pm->tileToWorldCenter(tile.x, tile.y);
+  // 2. 核心逻辑：检查是否进入攻击距离
+  // 距离计算：士兵中心到建筑中心的距离
+  float dist = getPosition().distance(target_building_->getPosition());
 
-  currentPathIndex_++;
+  // 判定：攻击距离 + 建筑半径（建筑是40像素半径）
+  // 如果进入射程，停止移动，开启攻击动作
+  if (dist <= (this->attack_range_ + 40.0f)) {
+    this->stopAllActions();
+    this->attackBuilding(target_building_);
+    return;
+  }
+
+  // 3.
+  // 路径点检查：如果已经走完了所有路径点还没到攻击距离，说明路被堵死或目标不可达
+  if (pathTiles_.empty() || currentPathIndex_ >= (int)pathTiles_.size()) {
+    CCLOG("Path finished but not in range, recalculating...");
+    this->recalculatePathTo(target_building_);  // 尝试重新规划一次路径
+    return;
+  }
+
+  // 4. 执行移动：向下一个 A* 路径点迈进
+  auto pm = PlacementManager::getInstance();
+  Vec2 nextTile = pathTiles_[currentPathIndex_];
+  Vec2 worldPos = pm->tileToWorldCenter(nextTile.x, nextTile.y);
+
+  currentPathIndex_++;  // 索引指向下一个
 
   changeState(SoldierState::kMove);
-  float distance = getPosition().distance(worldPos);
-  float moveTime = distance / speed_;
+
+  float moveDistance = getPosition().distance(worldPos);
+  float moveTime = moveDistance / speed_;
 
   auto moveAction = MoveTo::create(moveTime, worldPos);
+  // 递归调用：到达这个点后，继续检查是否到射程，或者走向下一个点
   auto callback = CallFunc::create([this]() { this->moveToNextPathPoint(); });
 
-  runAction(Sequence::create(moveAction, callback, nullptr));
+  this->runAction(Sequence::create(moveAction, callback, nullptr));
 }
+
 void Soldier::setSpeed(float speed) { speed_ = speed; }
 void Soldier::createPhysicsBody(float radius) {
   // 仅设置碰撞半径，用于手动检测
@@ -293,24 +314,61 @@ void Soldier::createPhysicsBody(float radius) {
 }
 void Soldier::update(float dt) {
   Node::update(dt);
+  if (isDead()) return;
 
-  // 简化的碰撞分离逻辑
-  Vec2 myPos = getPosition();
-  float myRadius = getCollisionRadius();
+  // 第一步：进行碰撞检测，防止重叠
+  Vec2 myPos = this->getPosition();
+  float myRadius = this->getCollisionRadius();
+  Vec2 totalCorrection(0, 0);
 
-  auto scene = Director::getInstance()->getRunningScene();
-  for (Node* child : scene->getChildren()) {
-    Soldier* other = dynamic_cast<Soldier*>(child);
-    if (other && other != this && !other->isDead()) {
-      float dist = myPos.distance(other->getPosition());
-      float minDist = myRadius + other->getCollisionRadius();
-      if (dist < minDist && dist > 5.0f) {
-        Vec2 dir = (myPos - other->getPosition()).getNormalized();
-        setPosition(myPos + dir * (minDist - dist) * 0.5f);
+  for (auto child : this->getParent()->getChildren()) {
+    if (child == this || !child->isVisible()) continue;
+
+    // 仅保留士兵间的挤开，防止叠罗汉
+    auto otherSoldier = dynamic_cast<Soldier*>(child);
+    if (otherSoldier && !otherSoldier->isDead()) {
+      float dist = myPos.distance(otherSoldier->getPosition());
+      float minDist = myRadius + otherSoldier->getCollisionRadius();
+      if (dist < minDist && dist > 0.1f) {
+        totalCorrection +=
+            (myPos - otherSoldier->getPosition()).getNormalized() *
+            (minDist - dist) * 0.7f;
       }
     }
   }
+
+  if (totalCorrection != Vec2::ZERO) {
+    this->setPosition(myPos + totalCorrection);
+  }
+
+  // 第二步：更新 CD 计时器
+  if (!is_attack_CD_ready_) {
+    attack_CD_remaining_ -= dt;
+    if (attack_CD_remaining_ <= 0) {
+      is_attack_CD_ready_ = true;
+      attack_CD_remaining_ = 0;
+    }
+  }
+
+  // 第三步：核心决策逻辑（攻击循环）
+  //  只有在位移修正完成后，这里的 getPosition() 才是准确的
+  if (current_state_ == SoldierState::kIdle && is_attack_CD_ready_ &&
+      target_building_) {
+    float dist = getPosition().distance(target_building_->getPosition());
+
+    if (dist <= (attack_range_ + Building::getCollisionRadius())) {
+      if (!target_building_->isDestroyed()) {
+        this->attackBuilding(target_building_);
+      } else {
+        this->startAttack();
+      }
+    } else if (current_state_ != SoldierState::kMove) {
+      // 如果不在射程，且不在移动中，可能需要重新寻路靠近
+      this->recalculatePathTo(target_building_);
+    }
+  }
 }
+
 Building* Soldier::findBestTargetBuilding() {
   // 不要直接用 runningScene，而是搜索士兵所在的父节点（MapScene层）
   auto parent = this->getParent();
@@ -332,4 +390,22 @@ Building* Soldier::findBestTargetBuilding() {
     }
   }
   return best;
+}
+void Soldier::startAttack() {
+  if (isDead()) return;
+
+  // 1. 寻找最近的敌方建筑
+  Building* nextTarget = this->findBestTargetBuilding();
+
+  if (nextTarget) {
+    this->setTargetBuilding(nextTarget);
+    // 2. 重新计算路径
+    this->recalculatePathTo(nextTarget);
+    // 3. 开始移动
+    this->moveToNextPathPoint();
+  } else {
+    // 4. 地面上没有建筑了，进入待机
+    this->changeState(SoldierState::kIdle);
+    CCLOG("No more targets on map.");
+  }
 }

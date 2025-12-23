@@ -11,11 +11,11 @@
                 <key>spriteOffset</key>
                 <string>{0,0}</string>
                 <key>spriteSize</key>
-                <string>{66,91}</string>
+                <string>{44,81}</string>
                 <key>spriteSourceSize</key>
-                <string>{66,91}</string>
+                <string>{44,81}</string>
                 <key>textureRect</key>
-                <string>{{0,0},{66,91}}</string>
+                <string>{{0,0},{44,81}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
@@ -29,13 +29,13 @@
             <key>premultiplyAlpha</key>
             <false/>
             <key>realTextureFileName</key>
-            <string>rarbarian_idle.png</string>
+            <string>rarbarian_idle_01.png</string>
             <key>size</key>
-            <string>{66,91}</string>
+            <string>{44,81}</string>
             <key>smartupdate</key>
-            <string>$TexturePacker:SmartUpdate:9ee0ff4741fa4660f66761a752f3dfff:52f6e729fc9f7a682c2e052cc2ebe880:c74fe870bd1ab574c824a3f3d7e84e5d$</string>
+            <string>$TexturePacker:SmartUpdate:b2920abf00fa20ba688e1becba8cbf95:762d81e83963b3778068d085d1c174ae:c74fe870bd1ab574c824a3f3d7e84e5d$</string>
             <key>textureFileName</key>
-            <string>rarbarian_idle.png</string>
+            <string>rarbarian_idle_01.png</string>
         </dict>
     </dict>
 </plist>

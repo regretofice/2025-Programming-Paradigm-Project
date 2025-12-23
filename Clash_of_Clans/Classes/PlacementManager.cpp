@@ -272,7 +272,7 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
     Vec2 placePos = tileToWorldCenter(tileX, tileY);
     CCLOG(">>> Try place soldier, type=%d", _currentId);
     auto soldier =
-        Rarbarian::create(50, 10, 30, 1);  // GroundRarbarian.cpp 里的工厂函数
+        Rarbarian::create(50, 10, 50, 1);  // GroundRarbarian.cpp 里的工厂函数
     CCLOG(">>> Rarbarian created: %p", soldier);
 
     if (soldier) {
@@ -288,12 +288,7 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
       activeSoldiers.push_back(soldier);
       // 放下后立即开始自动寻路 + 移动
       CCLOG(">>> RUNNING PATHFINDING FOR SOLDIER");
-      Building* target = soldier->findBestTargetBuilding();
-      if (target) {
-        soldier->setTargetBuilding(target);
-        soldier->recalculatePathTo(target);
-        soldier->moveToNextPathPoint();
-      }
+      soldier->startAttack();
 
       CCLOG("Soldier placed at tile (%d,%d), radius=%.1f", tileX, tileY,
             soldierRadius);
@@ -314,5 +309,33 @@ void PlacementManager::removeSoldier(Soldier* soldier) {
   if (it != activeSoldiers.end()) {
     activeSoldiers.erase(it);
     CCLOG("Soldier removed from active list");
+  }
+}
+void PlacementManager::clearAll() {
+  CCLOG("PlacementManager: Clearing all references and states.");
+
+  // 1. 清空士兵和建筑的指针列表
+  // 注意：这里不需要手动 delete 士兵/建筑，因为它们作为场景节点
+  // 会在 replaceScene 时由 Cocos2d-x 的引用计数机制自动销毁。
+  activeSoldiers.clear();
+
+  // 2. 重置放置状态
+  _currentType = PlacementType::NONE;
+  if (_previewSprite) {
+    // tempSprite 是单例持有的临时显示对象，场景销毁时它可能还没被移除
+    _previewSprite->removeFromParent();
+    _previewSprite = nullptr;
+  }
+
+  // 3. 停止所有正在进行的调度器（如果有）
+  // 如果你在 PlacementManager 里使用了 scheduleUpdate，必须停止它
+  Director::getInstance()->getScheduler()->unscheduleUpdate(this);
+
+  // 4. 重置网格占用地图
+  // 确保下次进入场景时，网格是干净的
+  for (int i = 0; i < _mapWidth; ++i) {
+    for (int j = 0; j < _mapHeight; ++j) {
+      _gridOccupied[i][j] = 0;
+    }
   }
 }

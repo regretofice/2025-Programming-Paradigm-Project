@@ -1,29 +1,29 @@
-#ifndef BUILDING_ENUMS_H
+ï»¿#ifndef BUILDING_ENUMS_H
 #define BUILDING_ENUMS_H
 
-// ÕóÓª¹éÊô
+// é˜µè¥å½’å±ž
 enum class CampType {
-    PLAYER,   // Íæ¼ÒÕóÓª
-    ENEMY     // µÐ·½ÕóÓª
+  PLAYER,  // çŽ©å®¶é˜µè¥
+  ENEMY    // æ•Œæ–¹é˜µè¥
 };
 
-// ½¨ÖþÀàÐÍ
+// å»ºç­‘ç±»åž‹
 enum class BuildingType {
-    COMMON,   // ÆÕÍ¨½¨Öþ£¨´ó±¾Óª¡¢³ÇÇ½µÈ£©
-    DEFENSE,  // ·ÀÓù½¨Öþ£¨¼ýËþ¡¢¼ÓÅ©ÅÚµÈ£©
-    RESOURCE  // ×ÊÔ´½¨Öþ£¨½ð¿ó¡¢Ê¥Ë®ÊÕ¼¯Æ÷µÈ£©
+  COMMON,   // æ™®é€šå»ºç­‘ï¼ˆå¤§æœ¬è¥ã€åŸŽå¢™ç­‰ï¼‰
+  DEFENSE,  // é˜²å¾¡å»ºç­‘ï¼ˆç®­å¡”ã€åŠ å†œç‚®ç­‰ï¼‰
+  RESOURCE  // èµ„æºå»ºç­‘ï¼ˆé‡‘çŸ¿ã€åœ£æ°´æ”¶é›†å™¨ç­‰ï¼‰
 };
 
-// ·ÀÓù½¨Öþ¹¥»÷·½Ê½
+// é˜²å¾¡å»ºç­‘æ”»å‡»æ–¹å¼
 enum class AttackType {
-    SINGLE_TARGET,  // µ¥Ìå¹¥»÷
-    AREA_DAMAGE,    // ·¶Î§ÉËº¦
+  SINGLE_TARGET,  // å•ä½“æ”»å‡»
+  AREA_DAMAGE,    // èŒƒå›´ä¼¤å®³
 };
 
-// ×ÊÔ´ÀàÐÍ
+// èµ„æºç±»åž‹
 enum class ResourceType {
-    GOLD,    // ½ð±Ò
-    ELIXIR,  // Ê¥Ë®
+  GOLD,    // é‡‘å¸
+  ELIXIR,  // åœ£æ°´
 };
 
 #endif

@@ -4,7 +4,7 @@
     <dict>
         <key>frames</key>
         <dict>
-            <key>rarbarian_running_01.png</key>
+            <key>rarbarian_move_01.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -19,7 +19,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>rarbarian_running_02.png</key>
+            <key>rarbarian_move_02.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -34,7 +34,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>rarbarian_running_03.png</key>
+            <key>rarbarian_move_03.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -59,13 +59,13 @@
             <key>premultiplyAlpha</key>
             <false/>
             <key>realTextureFileName</key>
-            <string>rarbarian_running.png</string>
+            <string>rarbarian_move.png</string>
             <key>size</key>
             <string>{188,95}</string>
             <key>smartupdate</key>
             <string>$TexturePacker:SmartUpdate:d3e6bd752c81d4a91951a49d5026d551:a59d39fa91c13d69a781b648eb283227:97bff7b43d80b90e01492d7f218f3e67$</string>
             <key>textureFileName</key>
-            <string>rarbarian_running.png</string>
+            <string>rarbarian_move.png</string>
         </dict>
     </dict>
 </plist>

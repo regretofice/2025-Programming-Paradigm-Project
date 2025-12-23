@@ -73,6 +73,8 @@ class Soldier : public Sprite {
   void recalculatePathTo(Building* target);
   // 移动到目标建筑
   void moveToNextPathPoint();
+  // 自动执行上述寻找建筑并攻击建筑的行为
+  void startAttack();
 
   ////////////////////
   // 碰撞相关接口
