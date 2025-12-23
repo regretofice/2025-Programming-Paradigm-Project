@@ -23,6 +23,7 @@ class Building : public Sprite {
   float _upgradeTime;       // 升级时间（秒）
   std::string _name;        // 建筑名称
   float collision_radius_;  // 建筑碰撞半径
+  Sprite* _ruinsSprite;     // 废墟图片
 
  public:
   // Cocos2d风格创建函数（内存自动管理）

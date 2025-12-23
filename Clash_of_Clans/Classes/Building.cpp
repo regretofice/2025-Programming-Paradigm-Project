@@ -1,4 +1,4 @@
-﻿#include "Building.h"
+#include "Building.h"
 
 #include "BuildingManager.h"
 Building::Building()
@@ -12,9 +12,16 @@ Building::Building()
       _isDestroyed(false),
       _upgradeCost(0),
       _upgradeTime(0.0f),
-      _name("") {}
+      _name(""),
+      _ruinsSprite(nullptr) {}
 
-Building::~Building() {}
+Building::~Building() {
+  // 清理废墟图片
+  if (_ruinsSprite) {
+    _ruinsSprite->removeFromParent();
+    _ruinsSprite = nullptr;
+  }
+}
 
 Building* Building::create(const std::string& texPath, const std::string& name,
                            CampType camp, int level, int maxLevel, int maxHP,
@@ -68,7 +75,25 @@ bool Building::init(const std::string& texPath, const std::string& name,
 void Building::checkDestroyed() {
   if (_currentHP <= 0 && !_isDestroyed) {
     _isDestroyed = true;
-    this->setVisible(false);  // 隐藏模型
+    
+    // 创建废墟图片
+    _ruinsSprite = Sprite::create("ruins.png");
+    if (_ruinsSprite) {
+      // 设置废墟图片的位置和大小与原建筑相同
+      _ruinsSprite->setPosition(this->getPosition());
+      _ruinsSprite->setAnchorPoint(Vec2(0.5f, 0.5f));
+      
+      
+      
+      // 将废墟图片添加到父节点，设置较低的Z顺序，确保在士兵下方
+      if (this->getParent()) {
+        // 士兵的Z顺序通常是5，所以废墟设置为3，确保在士兵下方但在地图上方
+        this->getParent()->addChild(_ruinsSprite, 3);
+      }
+    }
+    
+    // 隐藏原建筑模型
+    this->setVisible(false);
     CCLOG("建筑[%s]被摧毁！", _name.c_str());
     // 可扩展：播放摧毁动画、通知游戏管理器等
   }
@@ -107,3 +132,6 @@ bool Building::upgrade() {
 void Building::update(float dt) {
   Sprite::update(dt);  // 基类更新（空实现，子类重写）
 }
+
+
+

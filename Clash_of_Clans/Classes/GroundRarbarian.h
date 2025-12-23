@@ -13,6 +13,9 @@ class Rarbarian : public GroundSoldier {
   SoldierType getSoldierType() const override {
     return SoldierType::kGroundRarbarian;
   }
+  SoldierMoveType getSoldierMoveType() const override {
+      return SoldierMoveType::kGround;
+  }
   // 职业逻辑
   void takeDamage(int damage);
   void attackSoldier(Soldier* target) override;

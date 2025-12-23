@@ -25,6 +25,10 @@ enum class SoldierType {
   kAirThunderDragon,  // 天空-雷电飞龙
   kAirBallonSoldier   // 天空-气球兵
 };
+enum class SoldierMoveType {
+	kAir,             // 空军
+	kGround           // 陆军
+};
 class Soldier : public Sprite {
  public:
   ///////////////////
@@ -44,7 +48,8 @@ class Soldier : public Sprite {
   bool isDead() const { return hp_ <= 0; }
   // 纯虚函数：获取士兵类型
   virtual SoldierType getSoldierType() const = 0;
-
+  // 纯虚函数：获取士兵移动方式
+  virtual SoldierMoveType getSoldierMoveType() const = 0;
   ////////////////
   // 状态机相关操作
 
@@ -124,6 +129,7 @@ class Soldier : public Sprite {
   int attack_;                  // 士兵攻击
   int attack_range_;            // 士兵攻击范围
   SoldierState current_state_;  // 士兵当前状态
+  SoldierMoveType move_type_;   // 士兵移动方式
   float speed_;                 // 士兵移动速度
   float attack_CD_ = 1.0f;      // 攻击冷却总时长（秒）
 
