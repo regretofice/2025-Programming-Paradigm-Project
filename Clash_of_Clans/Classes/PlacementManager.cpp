@@ -257,6 +257,9 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
       parentScene->addChild(newBuilding, 5);
       occupyGrid(baseX, baseY, sizeInTiles);
     }
+    // 放置建筑后立即显示血条
+    newBuilding->showHpBar(true);
+
   } else if (_currentType == PlacementType::SOLDIER) {
     Vec2 tilePos = worldToTile(worldPos);
     int tileX = static_cast<int>(tilePos.x);

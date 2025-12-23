@@ -373,43 +373,6 @@ void MapScene::onTouchMoved(Touch* touch, Event* event) {
 void MapScene::onTouchEnded(Touch* touch, Event* event) {
     // 先处理原有的放置逻辑
     PlacementManager::getInstance()->onTouchBegan(touch, event, this);
-
-    // 检查是否点击了资源建筑进行收集
-    auto buildings = BuildingManager::getInstance()->getAllBuildings();
-    for (auto building : buildings) {
-        if (building && !building->isDestroyed()) {
-            // 获取建筑在世界坐标系中的位置和大小
-            Vec2 buildingPos = building->getPosition();
-            float buildingSize = building->getContentSize().width * building->getScale();
-
-            // 将触摸坐标转换为世界坐标
-            Vec2 touchPos = touch->getLocation();
-
-            // 检查是否点击在建筑上
-            Rect buildingRect(buildingPos.x - buildingSize / 2,
-                buildingPos.y - buildingSize / 2,
-                buildingSize, buildingSize);
-
-            if (buildingRect.containsPoint(touchPos)) {
-                // 如果是资源建筑，收集资源
-                auto resourceBuilding = dynamic_cast<ResourceBuilding*>(building);
-                if (resourceBuilding) {
-                    int collectedAmount = resourceBuilding->collectResource();
-                    if (collectedAmount > 0) {
-                        // 根据资源类型更新玩家数据
-                        if (resourceBuilding->getResType() == ResourceType::GOLD) {
-                          
-                        }
-                        else {
-                        }                 
-                        // 立即更新资源显示
-                        updateResourceDisplay();
-                    }
-                }
-                break;
-            }
-        }
-    }
 }
 
 // 取消放置状态
@@ -467,6 +430,8 @@ void MapScene::loadSavedBuildings() {
 
         if (building) {
             building->setPosition(Vec2(data.positionX, data.positionY));
+            this->addChild(building, 5);
+            building->showHpBar(true);  // 加载建筑时也显示血条
         }
     }
 }
