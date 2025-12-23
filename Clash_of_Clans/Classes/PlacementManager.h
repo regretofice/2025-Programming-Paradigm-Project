@@ -39,6 +39,9 @@ class PlacementManager {
                            cocos2d::Node* parentScene);
   // 将士兵从ActiveSoldier中移除
   void removeSoldier(Soldier* soldier);
+
+  // 获取所有士兵
+  const std::vector<Soldier*>& getSoldiers() const { return activeSoldiers; }
   // 清空整个PlacementManager单例
   void clearAll();
 

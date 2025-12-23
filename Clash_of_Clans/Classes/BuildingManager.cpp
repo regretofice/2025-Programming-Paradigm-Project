@@ -1,10 +1,13 @@
 ﻿#include "BuildingManager.h"
 
+#include <algorithm>
+
 #include "cocos2d.h"
 
 using namespace cocos2d;
 
 BuildingManager* BuildingManager::_instance = nullptr;
+std::vector<Building*> BuildingManager::_buildings = {};
 
 BuildingManager* BuildingManager::getInstance() {
   if (!_instance) {
@@ -72,9 +75,7 @@ std::vector<Building*> BuildingManager::getBuildingsByType(
     BuildingType type) const {
   std::vector<Building*> result;
   for (auto building : _buildings) {
-    if (building && !building->isDestroyed() &&
-        building->getType() ==
-            type) {  // 注意：需要在Building类中添加getType()方法
+    if (building && !building->isDestroyed() && building->getType() == type) {
       result.push_back(building);
     }
   }
@@ -86,7 +87,7 @@ std::vector<Building*> BuildingManager::getBuildingsByCampAndType(
   std::vector<Building*> result;
   for (auto building : _buildings) {
     if (building && !building->isDestroyed() && building->getCamp() == camp &&
-        building->getType() == type) {  // 需要Building类支持getType()
+        building->getType() == type) {
       result.push_back(building);
     }
   }

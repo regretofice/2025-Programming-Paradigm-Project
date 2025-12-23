@@ -1,9 +1,9 @@
 ﻿#ifndef __GROUND_RARBARIAN_H__
 #define __GROUND_RARBARIAN_H__
 
-#include "GroundSoldier.h"
+#include "Soldier.h"
 
-class Rarbarian : public GroundSoldier {
+class Rarbarian : public Soldier {
  public:
   static Rarbarian* create(int hp, int attack, int attack_range, int attack_CD);
   bool init(int hp, int attack, int attack_range, int attack_CD);
@@ -14,7 +14,7 @@ class Rarbarian : public GroundSoldier {
     return SoldierType::kGroundRarbarian;
   }
   SoldierMoveType getSoldierMoveType() const override {
-      return SoldierMoveType::kGround;
+    return SoldierMoveType::kGround;
   }
   // 职业逻辑
   void takeDamage(int damage);
