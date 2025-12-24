@@ -357,6 +357,16 @@ void MapScene::createPlacementMenu() {
     onSoldierButtonClicked(sender, 3);  // 3代表炸弹人
   });
   menuPanel2->addChild(bombermanBtn);
+
+  // 士兵按钮5 - 气球兵
+  auto ballonsoldierBtn = ui::Button::create("ballon_soldier_icon.png");
+  ballonsoldierBtn->setPosition(Vec2(60, visibleSize.height - 460));
+  ballonsoldierBtn->setScale(0.8f);
+  ballonsoldierBtn->addClickEventListener([this](Ref* sender) {
+    onSoldierButtonClicked(sender, 5);  // 3代表炸弹人
+  });
+
+  menuPanel2->addChild(ballonsoldierBtn);
   // 取消按钮
   auto cancelBtn = ui::Button::create("cancel_icon.png");
   cancelBtn->setPosition(Vec2(60, 60));

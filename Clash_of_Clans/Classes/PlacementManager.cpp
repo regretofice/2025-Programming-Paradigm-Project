@@ -1,6 +1,7 @@
 ﻿
 #include "PlacementManager.h"
 
+#include "AirBallonSoldier.h"
 #include "DefenseBuilding.h"
 #include "GroundRarbarian.h"
 #include "Groundbomberman.h"
@@ -152,6 +153,8 @@ void PlacementManager::createPreviewSprite(int buildingType, int soldierType,
       texPath = "rarbarian_icon.png";
     else if (soldierType == 3)
       texPath = "bomberman_icon.png";
+    else if (soldierType == 5)
+      texPath = "ballon_soldier_icon.png";
   }
 
   _previewSprite = Sprite::create(texPath);
@@ -283,6 +286,8 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
       soldier = Rarbarian::create(50, 10, 50, 1);
     } else if (_currentId == 3) {
       soldier = Bomberman::create(30, 30, 10, 2);
+    } else if (_currentId == 5) {
+      soldier = BallonSoldier::create(30, 30, 10, 2);
     }
 
     CCLOG(">>> soldier created: %p", soldier);
