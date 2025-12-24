@@ -11,6 +11,7 @@ bool Soldier::init(const std::string& texPath, int hp, int attack,
     return false;
   }
   // 初始化核心属性
+  hp_limit_ = hp;
   hp_ = hp;
   attack_ = attack;
   attack_range_ = attack_range;

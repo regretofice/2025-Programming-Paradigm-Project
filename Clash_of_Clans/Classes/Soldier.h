@@ -39,6 +39,8 @@ class Soldier : public Sprite {
   void setSpeed(float speed);
   // 返回当前血量
   int getHp() const { return hp_; }
+  // 返回士兵血量上限
+  int getHpLimit() const { return hp_limit_; }
   void setHp(int hp) { hp_ = hp; }
   // 返回当前攻击力
   int getAttack() const { return attack_; }
@@ -131,6 +133,7 @@ class Soldier : public Sprite {
 
  private:
   int hp_;                      // 士兵血量
+  int hp_limit_;                // 士兵生命上限
   int attack_;                  // 士兵攻击
   int attack_range_;            // 士兵攻击范围
   SoldierState current_state_;  // 士兵当前状态
