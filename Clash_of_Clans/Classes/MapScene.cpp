@@ -232,9 +232,9 @@ void MapScene::updateResourceDisplay() {
 
   // 获取当前资源
   int currentGold = playerData->getGold();
-  int maxGold = 500;
+  int maxGold = playerData->getGoldLimit();
   int currentElixir = playerData->getElixir();
-  int maxElixir = 500;
+  int maxElixir = playerData->getElixirLimit();
 
   // 计算百分比
   float goldPercent = maxGold > 0 ? (currentGold * 100.0f / maxGold) : 0;
@@ -485,12 +485,12 @@ void MapScene::loadSavedBuildings() {
           AttackType::SINGLE_TARGET, 2.0f);
     }
 
-        if (building) {
-            building->setPosition(Vec2(data.positionX, data.positionY));
-            this->addChild(building, 5);
-            building->showHpBar(true);  // 加载建筑时也显示血条
-        }
+    if (building) {
+      building->setPosition(Vec2(data.positionX, data.positionY));
+      this->addChild(building, 5);
+      building->showHpBar(true);  // 加载建筑时也显示血条
     }
+  }
 }
 
 // 在指定位置生成士兵
