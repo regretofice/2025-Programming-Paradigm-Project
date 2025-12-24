@@ -27,7 +27,11 @@ class PlayerDataManager : public cocos2d::Ref {
   //   获取资源的数量的接口，以及设置资源的接口
 
   // 获取金币数量
-  int getGold() const;
+  int getGold() const { return gold_; };
+  // 获取金币上限数量
+  int getGoldLimit() const { return gold_limit_; };
+  // 获取金币增长速率
+  int getGoldGrowthRate() const { return gold_growth_rate; };
   // 设置金币数量（保存到本地）
   void setGold(int gold);
   // 设置金币上限（保存到本地）
@@ -36,7 +40,11 @@ class PlayerDataManager : public cocos2d::Ref {
   void setGoldGrowthRate(int rate);
 
   // 获取圣水数量
-  int getElixir() const;
+  int getElixir() const { return elixir_; };
+  // 获取圣水上限
+  int getElixirLimit() const { return elixir_limit_; };
+  // 获取圣水回复速率
+  int getElixirGrowthRate() const { return elixir_growth_rate; };
   // 设置圣水数量（保存到本地）
   void setElixir(int elixir);
   // 设置圣水上限（保存到本地）
@@ -45,7 +53,11 @@ class PlayerDataManager : public cocos2d::Ref {
   void setElixirGrowthRate(int rate);
 
   // 获取建筑工人数量
-  int getBuilder() const;
+  int getBuilder() const { return builder_; };
+  // 获取建筑工人上限
+  int getBuilderLimit() const { return builder_limit_; };
+  // 获取建筑工人回复速率
+  int getBuilderGrowthRate() const { return builder_growth_rate; };
   // 设置建筑工人数量（保存到本地）
   void setBuilder(int builder);
   // 设置建筑工人上限（保存到本地）

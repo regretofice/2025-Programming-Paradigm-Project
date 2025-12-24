@@ -48,10 +48,6 @@ PDM::~PlayerDataManager() {
 // 初始化数据：从本地加载，无数据则设默认值
 void PDM::initData() { loadData(); }
 
-int PDM::getGold() const { return gold_; }
-int PDM::getElixir() const { return elixir_; }
-int PDM::getBuilder() const { return builder_; }
-
 void PDM::setGold(int gold) {
   if (gold < 0) {
     gold = 0;
