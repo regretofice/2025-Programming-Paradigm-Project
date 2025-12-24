@@ -24,8 +24,7 @@ bool Bomberman::init(int hp, int attack, int attack_range, int attack_CD) {
   }
 
   // 初始化碰撞半径
-  setCollisionRadius(15.0f);
-  createPhysicsBody(getCollisionRadius());
+  createPhysicsBody(15.0f);
   // 设置移动速度
   setSpeed(120.0f);
   // 加载动画配置
