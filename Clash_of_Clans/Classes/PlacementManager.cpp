@@ -3,6 +3,8 @@
 
 #include "AirBallonSoldier.h"
 #include "DefenseBuilding.h"
+#include "GroundArcher.h"
+#include "GroundGiant.h"
 #include "GroundRarbarian.h"
 #include "Groundbomberman.h"
 #include "PlayerDataManager.h"
@@ -54,13 +56,12 @@ void PlacementManager::initGrid(int mapWidth, int mapHeight, float tileSize,
 }
 
 Vec2 PlacementManager::worldToTile(const Vec2& worldPos) const {
-  // world -> map
-  Vec2 mapPos = (worldPos - Vec2(_mapOffsetX, _mapOffsetY)) /
-                _mapScale;  // _mapScale=2.0f
-
-  int tileX = static_cast<int>(mapPos.x / _tileSize);
-  int tileY = static_cast<int>(mapPos.y / _tileSize);
-
+  // 正确反缩放
+  Vec2 mapPos = (worldPos - Vec2(_mapOffsetX, _mapOffsetY)) / _mapScale;
+  float tileX = mapPos.x / _tileSize;
+  float tileY = mapPos.y / _tileSize;
+  CCLOG("worldToTile: world(%.1f,%.1f) -> tile(%.1f,%.1f)", worldPos.x,
+        worldPos.y, tileX, tileY);  // 调试日志
   return Vec2(tileX, tileY);
 }
 
@@ -151,8 +152,12 @@ void PlacementManager::createPreviewSprite(int buildingType, int soldierType,
   } else if (_currentType == PlacementType::SOLDIER) {
     if (soldierType == 1)
       texPath = "rarbarian_icon.png";
+    else if (soldierType == 2)
+      texPath = "giant_icon.png";
     else if (soldierType == 3)
       texPath = "bomberman_icon.png";
+    else if (soldierType == 4)
+      texPath = "archer_icon.png";
     else if (soldierType == 5)
       texPath = "ballon_soldier_icon.png";
   }
@@ -284,8 +289,12 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
     Soldier* soldier = nullptr;
     if (_currentId == 1) {
       soldier = Rarbarian::create(50, 10, 50, 1);
+    } else if (_currentId == 2) {
+      soldier = Giant::create(400, 20, 50, 2);
     } else if (_currentId == 3) {
       soldier = Bomberman::create(30, 30, 10, 2);
+    } else if (_currentId == 4) {
+      soldier = Archer::create(30, 30, 300, 1);
     } else if (_currentId == 5) {
       soldier = BallonSoldier::create(30, 30, 10, 2);
     }
