@@ -4,6 +4,7 @@
 #include "GridPathFinder.h"
 #include "PlacementManager.h"
 #include "SoldierTargetPreference.h"
+
 bool Soldier::init(const std::string& texPath, int hp, int attack,
                    int attack_range, int attack_CD) {
   if (!Sprite::initWithFile(texPath)) {

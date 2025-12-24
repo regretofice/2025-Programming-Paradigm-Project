@@ -4,7 +4,7 @@
 
 #include "Soldier.h"
 #include "cocos2d.h"
-
+#include "AudioManager.h"
 class MapScene : public cocos2d::Scene {
 public:
 	static cocos2d::Scene* createScene();
@@ -33,7 +33,6 @@ public:
 	static cocos2d::Scene* createSceneWithMap(const std::string& mapFile);
 	CREATE_FUNC(MapScene);
 	virtual void onEnter() override;
-
 	// 添加资源显示相关函数
 	void updateResourceDisplay();
 	
