@@ -131,7 +131,7 @@ void BallonSoldier::attackBuilding(Building* target) {
   auto bombDropCallback = CallFunc::create([this, target]() {
     if (target && !target->isDestroyed() && !isDead()) {
       this->explode();  // 只替换伤害逻辑
-      CCLOG("💣 Ballon bomb dropped!");
+      CCLOG(" Ballon bomb dropped!");
     }
 
     // 基类逻辑：回到Idle，update中会继续检查攻击
