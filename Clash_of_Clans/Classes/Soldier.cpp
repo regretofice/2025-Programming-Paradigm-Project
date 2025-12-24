@@ -3,6 +3,7 @@
 #include "BuildingManager.h"
 #include "GridPathFinder.h"
 #include "PlacementManager.h"
+#include "SoldierTargetPreference.h"
 bool Soldier::init(const std::string& texPath, int hp, int attack,
                    int attack_range, int attack_CD) {
   if (!Sprite::initWithFile(texPath)) {
@@ -70,6 +71,7 @@ void Soldier::changeState(SoldierState newState) {
     }
     case SoldierState::kDie: {
       playDieAnimation();
+      this->setVisible(false);
       break;
     }
   }
@@ -375,22 +377,57 @@ void Soldier::update(float dt) {
 }
 
 Building* Soldier::findBestTargetBuilding() {
-  auto buildings = BuildingManager ::getInstance()->getAllBuildings();
+  auto buildings = BuildingManager::getInstance()->getAllBuildings();
   if (buildings.empty()) return nullptr;
-  Building* best = nullptr;
-  float bestDist = FLT_MAX;
-  auto myPos = getPosition();
 
-  for (auto building : buildings) {
+  Vec2 myPos = getPosition();
+  Building* bestTarget = nullptr;
+  float bestDist = FLT_MAX;
+
+  // 1️ 先找“喜好类型”里最近的
+  const auto& preferredTypes = SoldierTargetPreference::getPreferredTargets(
+      getSoldierType());  // 可能为空
+  if (!preferredTypes.empty()) {
+    for (auto* building : buildings) {
+      if (!building || building->isDestroyed()) continue;
+
+      BuildingType type = building->getType();
+      // 是否是喜好类型
+      bool isPreferred = std::find(preferredTypes.begin(), preferredTypes.end(),
+                                   type) != preferredTypes.end();
+      if (!isPreferred) continue;
+
+      float dist = myPos.distance(building->getPosition());
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestTarget = building;
+      }
+    }
+    // 如果找到了喜好目标，直接返回
+    if (bestTarget) return bestTarget;
+  }
+
+  // 2️ 没有喜好目标 -> 在剩余建筑中找最近的
+  bestDist = FLT_MAX;
+  for (auto* building : buildings) {
     if (!building || building->isDestroyed()) continue;
+
+    // 可选：如果有喜好列表，就排除这些类型，只在“非喜好”中找最近
+    if (!preferredTypes.empty()) {
+      BuildingType type = building->getType();
+      bool isPreferred = std::find(preferredTypes.begin(), preferredTypes.end(),
+                                   type) != preferredTypes.end();
+      if (isPreferred) continue;  // 喜好类在上面已经搜过了
+    }
 
     float dist = myPos.distance(building->getPosition());
     if (dist < bestDist) {
       bestDist = dist;
-      best = building;
+      bestTarget = building;
     }
   }
-  return best;
+
+  return bestTarget;
 }
 void Soldier::startAttack() {
   if (isDead()) return;
