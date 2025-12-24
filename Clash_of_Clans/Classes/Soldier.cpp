@@ -4,7 +4,6 @@
 #include "GridPathFinder.h"
 #include "PlacementManager.h"
 #include "SoldierTargetPreference.h"
-
 bool Soldier::init(const std::string& texPath, int hp, int attack,
                    int attack_range, int attack_CD) {
   if (!Sprite::initWithFile(texPath)) {
@@ -201,47 +200,57 @@ void Soldier::recalculatePathTo(Building* target) {
   }
   if (getSoldierMoveType() == SoldierMoveType::kGround) {
     // 2. 遍历场景中的建筑，用碰撞半径“画”出不可走区域(只有走在地面上的人要判断)
-    auto scene = cocos2d::Director::getInstance()->getRunningScene();
-    if (scene) {
-      float myRadius = getCollisionRadius();
+    auto buildings = BuildingManager::getInstance()->getAllBuildings();
 
-      for (auto child : scene->getChildren()) {
-        auto building = dynamic_cast<Building*>(child);
-        if (!building || building->isDestroyed()) continue;
+    float myRadius = getCollisionRadius();
+    int buildingCount = 0;
 
-        float bRadius = building->getCollisionRadius();
-        float blockRadius = bRadius + myRadius + 10.0f;
+    int totalBlockedTiles = 0;
+    CCLOG(" BuildingManager found %d buildings, soldier r=%.1f",
+          (int)buildings.size(), myRadius);
+    for (auto building : buildings) {
+      if (!building || building->isDestroyed()) continue;
 
-        // 以建筑为圆心，在一定范围内枚举所有 tile
-        cocos2d::Vec2 bWorldPos = building->getPosition();
-        cocos2d::Vec2 bTilePos = pm->worldToTile(bWorldPos);
-        int bx = (int)bTilePos.x;
-        int by = (int)bTilePos.y;
+      buildingCount++;
+      float bRadius = building->getCollisionRadius();
+      CCLOG(" Building[%d] pos(%.1f,%.1f) radius=%.1f", buildingCount,
+            building->getPosition().x, building->getPosition().y, bRadius);
 
-        int maxTileOffset = (int)std::ceil(
-            blockRadius /
-            pm->getTileSize());  // 需要在PlacementManager里加个getTileSize()
+      float blockRadius = bRadius;
+      CCLOG(" blockRadius=%.1f", blockRadius);
 
-        for (int dx = -maxTileOffset; dx <= maxTileOffset; ++dx) {
-          for (int dy = -maxTileOffset; dy <= maxTileOffset; ++dy) {
-            int tx = bx + dx;
-            int ty = by + dy;
-            if ((tx == sx && ty == sy) || (tx == gx && ty == gy)) {
-              continue;  // 起点或终点，不标记为障碍
-            }
-            if (tx < 0 || tx >= mapW || ty < 0 || ty >= mapH) continue;
+      // 以建筑为圆心，在一定范围内枚举所有 tile
+      cocos2d::Vec2 bWorldPos = building->getPosition();
+      cocos2d::Vec2 bTilePos = pm->worldToTile(bWorldPos);
+      int bx = (int)bTilePos.x;
+      int by = (int)bTilePos.y;
 
-            // 把 tile 中心转换到世界坐标，检查与建筑碰撞圆是否重叠
-            cocos2d::Vec2 tileWorld =
-                pm->tileToWorldCenter((float)tx, (float)ty);
-            float dist = tileWorld.distance(bWorldPos);
-            if (dist < blockRadius) {
-              // 该格子对当前士兵来说是不可走的
-              finder.setWalkable(tx, ty, false);
-            }
+      int maxTileOffset = (int)std::ceil(
+          blockRadius /
+          pm->getTileSize());  // 需要在PlacementManager里加个getTileSize()
+      int blockedTiles = 0;
+      for (int dx = -maxTileOffset; dx <= maxTileOffset; ++dx) {
+        for (int dy = -maxTileOffset; dy <= maxTileOffset; ++dy) {
+          int tx = bx + dx;
+          int ty = by + dy;
+          if ((tx == sx && ty == sy) || (tx == gx && ty == gy)) {
+            continue;  // 起点或终点，不标记为障碍
+          }
+          if (tx < 0 || tx >= mapW || ty < 0 || ty >= mapH) continue;
+
+          // 把 tile 中心转换到世界坐标，检查与建筑碰撞圆是否重叠
+          cocos2d::Vec2 tileWorld = pm->tileToWorldCenter((float)tx, (float)ty);
+          float dist = tileWorld.distance(bWorldPos);
+          if (dist < blockRadius) {
+            // 该格子对当前士兵来说是不可走的
+            finder.setWalkable(tx, ty, false);
+            blockedTiles++;
+            totalBlockedTiles++;
           }
         }
+        CCLOG(" Building[%d] blocked %d tiles", buildingCount, blockedTiles);
       }
+      CCLOG("Total %d buildings found", buildingCount);
     }
   }
   // 3. 用生成好的阻挡网格跑 A*
