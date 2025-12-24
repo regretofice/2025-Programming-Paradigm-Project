@@ -39,9 +39,6 @@ void SoldierTargetPreference::initPreferences() {
   // 巨人：优先防御（扛伤害）
   preferences[SoldierType::kGroundGiant] = {BuildingType::DEFENSE};
 
-  // 雷龙：优先资源
-  preferences[SoldierType::kAirThunderDragon] = {BuildingType::RESOURCE};
-
   // 气球：优先特殊目标
   preferences[SoldierType::kAirBallonSoldier] = {BuildingType::DEFENSE};
 }

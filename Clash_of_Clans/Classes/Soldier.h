@@ -18,12 +18,11 @@ enum class SoldierState {
 };
 // 士兵类型（用于区分天空/地面+职业）
 enum class SoldierType {
-  kGroundRarbarian,   // 地面-野蛮人
-  kGroundGiant,       // 地面-巨人
-  kGroundBomberman,   // 地面-炸弹人
-  kGroundArcher,      // 地面-弓箭手
-  kAirThunderDragon,  // 天空-雷电飞龙
-  kAirBallonSoldier   // 天空-气球兵
+  kGroundRarbarian,  // 地面-野蛮人
+  kGroundGiant,      // 地面-巨人
+  kGroundBomberman,  // 地面-炸弹人
+  kGroundArcher,     // 地面-弓箭手
+  kAirBallonSoldier  // 天空-气球兵
 };
 enum class SoldierMoveType {
   kAir,    // 空军
@@ -125,6 +124,11 @@ class Soldier : public Sprite {
   // 目标建筑
   Building* target_building_;
 
+  // 攻击冷却相关
+  bool is_attack_CD_ready_;    // 冷却是否就绪
+  float attack_CD_remaining_;  // 剩余冷却时间
+  float attack_CD_ = 1.0f;     // 攻击冷却总时长（秒）
+
  private:
   int hp_;                      // 士兵血量
   int attack_;                  // 士兵攻击
@@ -132,14 +136,9 @@ class Soldier : public Sprite {
   SoldierState current_state_;  // 士兵当前状态
   SoldierMoveType move_type_;   // 士兵移动方式
   float speed_;                 // 士兵移动速度
-  float attack_CD_ = 1.0f;      // 攻击冷却总时长（秒）
 
   // 碰撞半径
   float collision_radius_;
-
-  // 攻击冷却相关
-  bool is_attack_CD_ready_;    // 冷却是否就绪
-  float attack_CD_remaining_;  // 剩余冷却时间
 
   // 预览模式相关
   float original_opacity_;
