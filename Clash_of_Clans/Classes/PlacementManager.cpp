@@ -9,6 +9,7 @@
 #include "Groundbomberman.h"
 #include "PlayerDataManager.h"
 #include "ResourceBuilding.h"
+#include "ResourceStorageBuilding.h"
 
 USING_NS_CC;
 
@@ -145,10 +146,20 @@ void PlacementManager::createPreviewSprite(int buildingType, int soldierType,
 
   std::string texPath;
   if (_currentType == PlacementType::BUILDING) {
-    if (buildingType == 1)
-      texPath = "gold_mine_icon.png";
-    else if (buildingType == 2)
-      texPath = "tower_icon.png";
+      if (buildingType == 1)
+          texPath = "gold_mine_icon_01.png";
+      else if (buildingType == 2)
+          texPath = "tower_icon_01.png";
+      else if (buildingType == 3)
+          texPath = "base_camp_01.png";
+      else if (buildingType == 4)
+          texPath = "elixir_collector_icon_01.png";
+      else if (buildingType == 5)
+          texPath = "cannon_01.png";
+      else if (buildingType == 6)
+          texPath = "Gold_Storage_01.png";
+      else if (buildingType == 7)
+          texPath = "Elixir_Storage_01.png";
   } else if (_currentType == PlacementType::SOLDIER) {
     if (soldierType == 1)
       texPath = "rarbarian_icon.png";
@@ -251,17 +262,41 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
 
   Vec2 centerTile(baseX + sizeInTiles / 2.0f, baseY + sizeInTiles / 2.0f);
   Vec2 snappedWorld = tileToWorldCenter(centerX, centerY);
-
+  auto pdm = PlayerDataManager::getInstance();
   if (_currentType == PlacementType::BUILDING) {
     Building* newBuilding = nullptr;
     if (_currentId == 1) {
       newBuilding = ResourceBuilding::create(
-          "gold_mine_icon.png", "金矿", CampType::PLAYER, 1, 3, 100, 60, 100,
+          "gold_mine_icon_01.png", "金矿", CampType::PLAYER, 1, 3, 100, 60, 100,
           5.0f, ResourceType::GOLD, 10, 500);
+      pdm->setGoldGrowthRate(pdm->getGoldGrowthRate() + 10);
     } else if (_currentId == 2) {
       newBuilding = DefenseBuilding::create(
-          "tower_icon.png", "防御塔", CampType::PLAYER, 1, 3, 200, 50, 150,
+          "tower_icon_01.png", "防御塔", CampType::PLAYER, 1, 3, 200, 50, 150,
           8.0f, 10, 150, AttackType::SINGLE_TARGET, 2.0f);
+    } else if (_currentId == 3) {
+      newBuilding = ResourceBuilding::create(
+           "base_camp_01.png", "大本营", CampType::PLAYER, 1, 3, 200, 50, 150,
+            8.0f, ResourceType::NORESOURCE, 0, 0);
+    } else if (_currentId == 4) {
+      newBuilding = ResourceBuilding::create(
+           "elixir_collector_icon_01.png", "圣水收集器", CampType::PLAYER, 1, 3, 100, 60, 100,
+           5.0f, ResourceType::ELIXIR, 10, 500);
+      pdm->setElixirGrowthRate(pdm->getElixirGrowthRate() + 10);
+    } else if (_currentId == 5) {
+      newBuilding = DefenseBuilding::create(
+           "cannon_01.png", "加农炮", CampType::PLAYER, 1, 3, 200, 50, 150,
+           8.0f, 10, 150, AttackType::SINGLE_TARGET, 2.0f, TargetType::GROUND_ONLY);
+    } else if (_currentId == 6) {
+      newBuilding = ResourceStorageBuilding::create(
+            "Gold_Storage_01.png", "储金罐", CampType::PLAYER, 1, 3,
+            400, 50, 100, 5.0f, ResourceType::GOLD, 1000, 0.5f);
+      pdm->setGoldLimit(pdm->getGoldLimit() + 1000);
+    } else if (_currentId == 7) {
+      newBuilding = ResourceStorageBuilding::create(
+            "Elixir_Storage_01.png", "圣水瓶", CampType::PLAYER, 1, 3,
+            400, 50, 100, 5.0f, ResourceType::GOLD, 1000, 0.5f);
+      pdm->setElixirLimit(pdm->getElixirLimit() + 1000);
     }
     if (newBuilding) {
       CCLOG("addChild building");

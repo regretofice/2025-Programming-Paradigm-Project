@@ -6,6 +6,7 @@
 #include "PlacementManager.h"
 #include "PlayerDataManager.h"
 #include "ResourceBuilding.h"
+#include "ResourceStorageBuilding.h"
 #include "StartScene.h"
 #include "cocos2d.h"
 #include "ui/CocosGUI.h"
@@ -326,7 +327,7 @@ void MapScene::createPlacementMenu() {
   float startY = visibleSize.height - 80;
 
   // 建筑按钮1 - 金矿
-  auto goldMineBtn = ui::Button::create("gold_mine_icon.png");
+  auto goldMineBtn = ui::Button::create("gold_mine_icon_01.png");
   goldMineBtn->setPosition(Vec2(60, startY - 20));
   goldMineBtn->setScale(0.8f);
   goldMineBtn->addClickEventListener([this](Ref* sender) {
@@ -335,13 +336,53 @@ void MapScene::createPlacementMenu() {
   menuPanel->addChild(goldMineBtn);
 
   // 建筑按钮2 - 防御塔
-  auto towerBtn = ui::Button::create("tower_icon.png");
+  auto towerBtn = ui::Button::create("tower_icon_01.png");
   towerBtn->setPosition(Vec2(60, startY - 100));
   towerBtn->setScale(0.8f);
   towerBtn->addClickEventListener([this](Ref* sender) {
     onBuildingButtonClicked(sender, 2);  // 2代表防御塔
   });
   menuPanel->addChild(towerBtn);
+  // 建筑按钮3 - 大本营
+  auto baseCampBtn = ui::Button::create("base_camp_01.png");
+  baseCampBtn->setPosition(Vec2(60, startY - 180));
+  baseCampBtn->setScale(0.8f);
+  baseCampBtn->addClickEventListener([this](Ref* sender) {
+      onBuildingButtonClicked(sender, 3);  // 3代表大本营
+      });
+  menuPanel->addChild(baseCampBtn);
+  // 建筑按钮4 - 圣水收集器
+  auto elixirCollectorBtn = ui::Button::create("elixir_collector_icon_01.png");
+  elixirCollectorBtn->setPosition(Vec2(60, startY - 260));
+  elixirCollectorBtn->setScale(0.8f);
+  elixirCollectorBtn->addClickEventListener([this](Ref* sender) {
+      onBuildingButtonClicked(sender, 4);  // 4代表圣水收集器
+      });
+  menuPanel->addChild(elixirCollectorBtn);
+  // 建筑按钮5 - 加农炮
+  auto cannonBtn = ui::Button::create("cannon_01.png");
+  cannonBtn->setPosition(Vec2(60, startY - 340));
+  cannonBtn->setScale(0.8f);
+  cannonBtn->addClickEventListener([this](Ref* sender) {
+      onBuildingButtonClicked(sender, 5);  // 5代表加农炮
+      });
+  menuPanel->addChild(cannonBtn);
+  // 建筑按钮6 - 储金罐
+  auto goldStorageBtn = ui::Button::create("Gold_Storage_01.png");
+  goldStorageBtn->setPosition(Vec2(60, startY - 420));
+  goldStorageBtn->setScale(0.8f);
+  goldStorageBtn->addClickEventListener([this](Ref* sender) {
+      onBuildingButtonClicked(sender, 6);  // 6代表储金罐
+      });
+  menuPanel->addChild(goldStorageBtn);
+  // 建筑按钮7 - 圣水瓶
+  auto elixirStorageBtn = ui::Button::create("Elixir_Storage_01.png");
+  elixirStorageBtn->setPosition(Vec2(60, startY - 500));
+  elixirStorageBtn->setScale(0.8f);
+  elixirStorageBtn->addClickEventListener([this](Ref* sender) {
+      onBuildingButtonClicked(sender, 7);  // 7代表圣水瓶
+      });
+  menuPanel->addChild(elixirStorageBtn);
 
   // 士兵按钮1 - 野蛮人
   auto barbarianBtn = ui::Button::create("rarbarian_icon.png");
@@ -506,16 +547,40 @@ void MapScene::loadSavedBuildings() {
     // 根据建筑类型创建对应的建筑
     if (data.type == (int)BuildingType::RESOURCE) {
       building = ResourceBuilding::create(
-          "gold_mine_icon.png", data.name, CampType::PLAYER, data.level, 3,
+          "gold_mine_icon_01.png", data.name, CampType::PLAYER, data.level, 3,
           100 * data.level, 60, 100 * data.level, 5.0f, ResourceType::GOLD,
           10 * data.level, 500 * data.level);
     } else if (data.type == (int)BuildingType::DEFENSE) {
       building = DefenseBuilding::create(
-          "tower_icon.png", data.name, CampType::PLAYER, data.level, 3,
+          "tower_icon_01.png", data.name, CampType::PLAYER, data.level, 3,
           200 * data.level, 50, 150 * data.level, 8.0f, 10 * data.level, 150,
           AttackType::SINGLE_TARGET, 2.0f);
+    } else if (data.type == (int)BuildingType::RESOURCE) {
+      building = ResourceBuilding::create(
+            "base_camp_01.png", data.name, CampType::PLAYER, data.level, 3,
+            200 * data.level, 50, 150 * data.level, 8.0f, ResourceType::NORESOURCE,
+          0 , 0);
+    } else if (data.type == (int)BuildingType::RESOURCE) {
+      building = ResourceBuilding::create(
+            "elixir_collector_icon_01.png", data.name, CampType::PLAYER, data.level, 3,
+            100 * data.level, 60, 100 * data.level, 5.0f, ResourceType::ELIXIR,
+            10 * data.level, 500 * data.level);
+    } else if (data.type == (int)BuildingType::DEFENSE) {
+      building = DefenseBuilding::create(
+            "cannon_01.png", data.name, CampType::PLAYER, data.level, 3,
+            200 * data.level, 50, 150 * data.level, 8.0f, 10 * data.level, 150,
+            AttackType::SINGLE_TARGET, 2.0f, TargetType::GROUND_ONLY);
+    } else if (data.type == (int)BuildingType::STORAGE) {
+      building = ResourceStorageBuilding::create(
+            "Gold_Storage_01.png", data.name, CampType::PLAYER, data.level, 3,
+            400 * data.level, 50, 100 * data.level, 5.0f, ResourceType::GOLD,
+            1000 * data.level, 0.5f);
+    } else if (data.type == (int)BuildingType::STORAGE) {
+      building = ResourceStorageBuilding::create(
+            "Elixir_Storage_01.png", data.name, CampType::PLAYER, data.level, 3,
+            400 * data.level, 50, 100 * data.level, 5.0f, ResourceType::ELIXIR,
+            1000 * data.level, 0.5f);
     }
-
     if (building) {
       building->setPosition(Vec2(data.positionX, data.positionY));
       this->addChild(building, 5);

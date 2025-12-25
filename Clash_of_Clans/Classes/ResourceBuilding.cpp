@@ -1,5 +1,5 @@
-﻿#include "ResourceBuilding.h"
-
+#include "ResourceBuilding.h"
+#include "PlayerDataManager.h"
 ResourceBuilding::ResourceBuilding()
     : _resType(ResourceType::GOLD),
     _productionPerSec(0),

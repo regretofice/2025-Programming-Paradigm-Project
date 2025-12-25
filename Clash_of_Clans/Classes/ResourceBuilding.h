@@ -1,4 +1,4 @@
-﻿#ifndef RESOURCE_BUILDING_H
+#ifndef RESOURCE_BUILDING_H
 #define RESOURCE_BUILDING_H
 
 #include "Building.h"
@@ -31,9 +31,10 @@ public:
     int collectResource();                   // 收集资源（返回收集量）
     virtual void update(float dt) override;  // 重写更新逻辑
 
-    // Getter
-    int getCurrentResource() const { return _currentRes; }
-    ResourceType getResType() const { return _resType; }
+  // Getter
+  int getCurrentResource() const { return _currentRes; }
+  ResourceType getResType() const { return _resType; }
+  int getMaxCapacity() const { return _maxCapacity; }
 
     virtual ~ResourceBuilding();
 };
