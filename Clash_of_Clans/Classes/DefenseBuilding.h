@@ -1,10 +1,17 @@
-﻿#ifndef DEFENSE_BUILDING_H
+#ifndef DEFENSE_BUILDING_H
 #define DEFENSE_BUILDING_H
 
 #include "Building.h"
 
 // 前向声明敌人类（避免循环引用）
 class Soldier;
+
+// 防御建筑可以攻击的目标类型
+enum class TargetType {
+  GROUND_ONLY,  // 只能攻击地面目标
+  AIR_ONLY,     // 只能攻击空中目标
+  BOTH          // 可以攻击地面和空中目标
+};
 
 class DefenseBuilding : public Building {
  private:
@@ -15,6 +22,11 @@ class DefenseBuilding : public Building {
   float _attackCD;         // 攻击冷却（秒）
   float _currentCD;        // 当前冷却
   Soldier* _target;        // 当前攻击目标
+  TargetType _targetType;  // 可以攻击的目标类型
+
+  // 攻击冷却相关
+  bool is_attack_CD_ready_;    // 冷却是否就绪
+  float attack_CD_remaining_;  // 剩余冷却时间
 
  public:
   static DefenseBuilding* create(const std::string& texPath,
@@ -22,21 +34,28 @@ class DefenseBuilding : public Building {
                                  int level, int maxLevel,  // 新增maxLevel
                                  int maxHP, float size, int upgradeCost,
                                  float upgradeTime, int dps, float attackRange,
-                                 AttackType attackType, float attackCD);
+                                 AttackType attackType, float attackCD,
+                                 TargetType targetType = TargetType::BOTH);
 
   virtual bool init(const std::string& texPath, const std::string& name,
                     CampType camp, int level, int maxLevel, int maxHP,
                     float size, int upgradeCost, float upgradeTime, int dps,
-                    float attackRange, AttackType attackType, float attackCD);
+                    float attackRange, AttackType attackType, float attackCD,
+                    TargetType targetType = TargetType::BOTH);
 
   // 专属方法
   void findTarget();                       // 寻找攻击范围内的敌人
   void attackTarget();                     // 攻击目标
   virtual void update(float dt) override;  // 重写更新逻辑
+  void DefenseBuilding::enableAttackCD(bool enable); //更新cd
+
+  // 调度器key（唯一标识，用于精准取消）
+  const std::string AttackCDSchedulerKey = "attackCD";
 
   // Getter
   int getDPS() const { return _dps; }
   float getAttackRange() const { return _attackRange; }
+  TargetType getTargetType() const { return _targetType; }
 
   virtual ~DefenseBuilding();
 };

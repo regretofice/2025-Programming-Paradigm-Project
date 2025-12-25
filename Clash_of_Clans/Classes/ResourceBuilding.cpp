@@ -1,5 +1,5 @@
-﻿#include "ResourceBuilding.h"
-
+#include "ResourceBuilding.h"
+#include "PlayerDataManager.h"
 ResourceBuilding::ResourceBuilding()
     : _resType(ResourceType::GOLD),
       _productionPerSec(0),
@@ -41,7 +41,7 @@ bool ResourceBuilding::init(const std::string& texPath, const std::string& name,
   _productionPerSec = productionPerSec;
   _maxCapacity = maxCapacity;
   _currentRes = 0;
-
+ 
   CCLOG("ResourceBuilding init success");
   return true;
 }

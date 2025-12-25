@@ -1,4 +1,4 @@
-﻿#ifndef RESOURCE_BUILDING_H
+#ifndef RESOURCE_BUILDING_H
 #define RESOURCE_BUILDING_H
 
 #include "Building.h"
@@ -34,6 +34,7 @@ class ResourceBuilding : public Building {
   // Getter
   int getCurrentResource() const { return _currentRes; }
   ResourceType getResType() const { return _resType; }
+  int getMaxCapacity() const { return _maxCapacity; }
 
   virtual ~ResourceBuilding();
 };

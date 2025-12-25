@@ -11,7 +11,8 @@ enum class CampType {
 enum class BuildingType {
   COMMON,   // 普通建筑（大本营、城墙等）
   DEFENSE,  // 防御建筑（箭塔、加农炮等）
-  RESOURCE  // 资源建筑（金矿、圣水收集器等）
+  RESOURCE, // 资源建筑（金矿、圣水收集器等）
+  STORAGE   // 存储建筑（储金罐、圣水瓶等）
 };
 
 // 防御建筑攻击方式
@@ -24,6 +25,7 @@ enum class AttackType {
 enum class ResourceType {
   GOLD,    // 金币
   ELIXIR,  // 圣水
+  NORESOURCE
 };
 
 #endif
