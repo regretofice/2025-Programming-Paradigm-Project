@@ -291,12 +291,12 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
       newBuilding = ResourceStorageBuilding::create(
             "Gold_Storage_01.png", "储金罐", CampType::PLAYER, 1, 3,
             400, 50, 100, 5.0f, ResourceType::GOLD, 1000, 0.5f);
-      pdm->setGoldLimit(pdm->getGoldLimit() + 1000);
+      pdm->setGoldLimit();
     } else if (_currentId == 7) {
       newBuilding = ResourceStorageBuilding::create(
             "Elixir_Storage_01.png", "圣水瓶", CampType::PLAYER, 1, 3,
             400, 50, 100, 5.0f, ResourceType::GOLD, 1000, 0.5f);
-      pdm->setElixirLimit(pdm->getElixirLimit() + 1000);
+      pdm->setElixirLimit();
     }
     if (newBuilding) {
       CCLOG("addChild building");

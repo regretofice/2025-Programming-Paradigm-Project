@@ -4,449 +4,584 @@
 #include "GridPathFinder.h"
 #include "PlacementManager.h"
 #include "SoldierTargetPreference.h"
-bool Soldier::init(const std::string& texPath, int hp, int attack,
-                   int attack_range, int attack_CD) {
-  if (!Sprite::initWithFile(texPath)) {
-    CCLOG("can't open the file to create soldier");
-    return false;
-  }
-  // 初始化核心属性
-  hp_limit_ = hp;
-  hp_ = hp;
-  attack_ = attack;
-  attack_range_ = attack_range;
-  current_state_ = SoldierState::kIdle;
-  attack_CD_ = attack_CD;
-  is_attack_CD_ready_ = true;
-  attack_CD_remaining_ = 0.0f;
-  original_opacity_ = 255;
-  is_preview_ = false;
+Soldier::Soldier()
+    : _hpBarBackground(nullptr),
+    _hpBarForeground(nullptr),
+    _showHpBar(false),
+    _hpBarWidth(30.0f),
+    _hpBarHeight(3.0f),
+    _hpBarOffsetY(80.0f) {
+}
 
-  loadAllAnimations();
-  // 初始化时启用攻击冷却检测（绑定调度器）
-  enableAttackCD(true);
-  //  确保ActionManager可用
-  scheduleUpdate();
-  return true;
+Soldier::~Soldier() {
+    // 清理血条
+    if (_hpBarBackground) {
+        _hpBarBackground->removeFromParent();
+        _hpBarBackground = nullptr;
+    }
+    if (_hpBarForeground) {
+        _hpBarForeground->removeFromParent();
+        _hpBarForeground = nullptr;
+    }
+}
+
+bool Soldier::init(const std::string& texPath, int hp, int attack,
+    int attack_range, int attack_CD) {
+    if (!Sprite::initWithFile(texPath)) {
+        CCLOG("can't open the file to create soldier");
+        return false;
+    }
+    // 初始化核心属性
+    hp_limit_ = hp;
+    hp_ = hp;
+    attack_ = attack;
+    attack_range_ = attack_range;
+    current_state_ = SoldierState::kIdle;
+    attack_CD_ = attack_CD;
+    is_attack_CD_ready_ = true;
+    attack_CD_remaining_ = 0.0f;
+    original_opacity_ = 255;
+    is_preview_ = false;
+
+    // 血条宽度根据士兵碰撞半径调整
+    _hpBarWidth = collision_radius_ * 1.5f;
+
+    loadAllAnimations();
+    // 初始化时启用攻击冷却检测（绑定调度器）
+    enableAttackCD(true);
+    // 确保ActionManager可用
+    scheduleUpdate();
+
+    // 创建血条
+    createHpBar();
+
+    return true;
 }
 
 void Soldier::takeDamage(int damage) {
-  if (isDead()) return;  // 死亡了就不计算伤害
+    if (isDead()) return;  // 死亡了就不计算伤害
 
-  hp_ -= damage;
-  if (hp_ <= 0) {
-    hp_ = 0;
-    enableAttackCD(false);  // 死亡后禁用冷却检测
-    this->stopAllActions();
-    changeState(SoldierState::kDie);  // 切换为死亡状态
+    hp_ -= damage;
 
-    // 告诉活跃对象池，该士兵已死
-    auto delay = DelayTime::create(2.0f);
-    auto callback = CallFunc::create(
-        [this]() { PlacementManager::getInstance()->removeSoldier(this); });
-    runAction(Sequence::create(delay, callback, nullptr));
-  }
+    // 受到伤害时显示血条
+    showHpBar(true);
+
+    if (hp_ <= 0) {
+        hp_ = 0;
+        enableAttackCD(false);  // 死亡后禁用冷却检测
+        this->stopAllActions();
+
+        // 死亡后隐藏血条
+        showHpBar(false);
+
+        changeState(SoldierState::kDie);  // 切换为死亡状态
+
+        // 告诉活跃对象池，该士兵已死
+        auto delay = DelayTime::create(2.0f);
+        auto callback = CallFunc::create(
+            [this]() { PlacementManager::getInstance()->removeSoldier(this); });
+        runAction(Sequence::create(delay, callback, nullptr));
+    }
+
+    // 更新血条显示
+    updateHpBar();
+}
+
+// 创建血条
+void Soldier::createHpBar() {
+    // 创建血条背景（红色）
+    _hpBarBackground = DrawNode::create();
+    _hpBarBackground->drawSolidRect(
+        Vec2(-_hpBarWidth / 2, 0),
+        Vec2(_hpBarWidth / 2, _hpBarHeight),
+        Color4F(0.5f, 0.0f, 0.0f, 0.8f)  // 深红色背景
+    );
+    _hpBarBackground->setPosition(Vec2(50, _hpBarOffsetY));
+    this->addChild(_hpBarBackground, 10);  // 确保血条在士兵上方
+
+    // 创建血条前景（绿色）
+    _hpBarForeground = DrawNode::create();
+    _hpBarForeground->drawSolidRect(
+        Vec2(-_hpBarWidth / 2, 0),
+        Vec2(_hpBarWidth / 2, _hpBarHeight),
+        Color4F(0.0f, 1.0f, 0.0f, 0.8f)  // 绿色前景
+    );
+    _hpBarForeground->setPosition(Vec2(50, _hpBarOffsetY));
+    this->addChild(_hpBarForeground, 11);  // 前景在背景上方
+
+    // 初始时隐藏血条
+    showHpBar(false);
+}
+
+// 更新血条显示
+void Soldier::updateHpBar() {
+    if (!_hpBarForeground || !_showHpBar) return;
+
+    // 计算血量百分比
+    float hpPercent = (hp_limit_ > 0) ? ((float)hp_ / (float)hp_limit_) : 0.0f;
+    hpPercent = std::max(0.0f, std::min(1.0f, hpPercent));  // 限制在0-1之间
+
+    // 清除旧的血条绘制
+    _hpBarForeground->clear();
+
+    // 根据血量百分比绘制新的血条
+    float currentWidth = _hpBarWidth * hpPercent;
+    if (currentWidth > 0) {
+        // 根据血量百分比改变颜色
+        Color4F barColor;
+        if (hpPercent > 0.6f) {
+            barColor = Color4F(0.0f, 1.0f, 0.0f, 0.8f);  // 绿色
+        }
+        else if (hpPercent > 0.3f) {
+            barColor = Color4F(1.0f, 1.0f, 0.0f, 0.8f);  // 黄色
+        }
+        else {
+            barColor = Color4F(1.0f, 0.0f, 0.0f, 0.8f);  // 红色
+        }
+
+        _hpBarForeground->drawSolidRect(
+            Vec2(-_hpBarWidth / 2, 0),
+            Vec2(-_hpBarWidth / 2 + currentWidth, _hpBarHeight),
+            barColor
+        );
+    }
+
+    // 如果士兵满血，可以隐藏血条（可选）
+    if (hpPercent >= 1.0f) {
+        _hpBarBackground->setVisible(false);
+        _hpBarForeground->setVisible(false);
+    }
+    else {
+        _hpBarBackground->setVisible(true);
+        _hpBarForeground->setVisible(true);
+    }
+}
+
+// 显示/隐藏血条
+void Soldier::showHpBar(bool show) {
+    _showHpBar = show;
+    if (_hpBarBackground) {
+        _hpBarBackground->setVisible(show);
+    }
+    if (_hpBarForeground) {
+        _hpBarForeground->setVisible(show);
+    }
 }
 
 void Soldier::changeState(SoldierState newState) {
-  if (current_state_ == newState) return;  // 状态一致，无需操作
+    if (current_state_ == newState) return;  // 状态一致，无需操作
 
-  if (current_state_ == SoldierState::kDie) return;  // 死了也不操作
+    if (current_state_ == SoldierState::kDie) return;  // 死了也不操作
 
-  stopAllStateActions();
+    stopAllStateActions();
 
-  current_state_ = newState;
+    current_state_ = newState;
 
-  switch (newState) {
-    case SoldierState::kIdle: {
-      playIdleAnimation();
-      break;
+    switch (newState) {
+        case SoldierState::kIdle: {
+            playIdleAnimation();
+            break;
+        }
+        case SoldierState::kMove: {
+            playMoveAnimation();
+            break;
+        }
+        case SoldierState::kAttack: {
+            playAttackAnimation();
+            break;
+        }
+        case SoldierState::kDie: {
+            playDieAnimation();
+            this->setVisible(false);
+            break;
+        }
     }
-    case SoldierState::kMove: {
-      playMoveAnimation();
-      break;
-    }
-    case SoldierState::kAttack: {
-      playAttackAnimation();
-      break;
-    }
-    case SoldierState::kDie: {
-      playDieAnimation();
-      this->setVisible(false);
-      break;
-    }
-  }
 }
 void Soldier::moveTo(const Vec2& targetPos, int speed) {
-  // 死亡状态不可移动
-  if (isDead()) return;
+    // 死亡状态不可移动
+    if (isDead()) return;
 
-  // 切换到移动状态
-  changeState(SoldierState::kMove);
+    // 切换到移动状态
+    changeState(SoldierState::kMove);
 
-  // 计算移动时间
-  float distance = getPosition().distance(targetPos);
-  float moveTime = distance / speed;
+    // 计算移动时间
+    float distance = getPosition().distance(targetPos);
+    float moveTime = distance / speed;
 
-  // 创建移动动作
-  MoveTo* moveAction = MoveTo::create(moveTime, targetPos);
-  // 移动完成后切换回站立状态
-  CallFunc* moveEndCallBack =
-      CallFunc::create([=]() { changeState(SoldierState::kIdle); });
+    // 创建移动动作
+    MoveTo* moveAction = MoveTo::create(moveTime, targetPos);
+    // 移动完成后切换回站立状态
+    CallFunc* moveEndCallBack =
+        CallFunc::create([=]() { changeState(SoldierState::kIdle); });
 
-  runAction(Sequence::create(moveAction, moveEndCallBack, nullptr));
+    runAction(Sequence::create(moveAction, moveEndCallBack, nullptr));
 }
 void Soldier::attackSoldier(Soldier* target) {
-  // 判断不攻击或者攻击处于冷却的情况
-  if (!target || isDead() || target->isDead() || !is_attack_CD_ready_) return;
+    // 判断不攻击或者攻击处于冷却的情况
+    if (!target || isDead() || target->isDead() || !is_attack_CD_ready_) return;
 
-  // 进入攻击冷却状态
-  is_attack_CD_ready_ = false;
-  attack_CD_remaining_ = attack_CD_;
-  changeState(SoldierState::kAttack);
-  CallFunc* attackHitCallBack = CallFunc::create([=]() {
-    if (target && !target->isDead()) {
-      target->takeDamage(attack_);
-      CCLOG("对目标造成%.1f伤害", attack_);
-    }
-    changeState(SoldierState::kIdle);
-  });
-  runAction(
-      Sequence::create(DelayTime::create(0.5f), attackHitCallBack, nullptr));
+    // 进入攻击冷却状态
+    is_attack_CD_ready_ = false;
+    attack_CD_remaining_ = attack_CD_;
+    changeState(SoldierState::kAttack);
+    CallFunc* attackHitCallBack = CallFunc::create([=]() {
+        if (target && !target->isDead()) {
+            target->takeDamage(attack_);
+            CCLOG("对目标造成%.1f伤害", attack_);
+        }
+        changeState(SoldierState::kIdle);
+        });
+    runAction(
+        Sequence::create(DelayTime::create(0.5f), attackHitCallBack, nullptr));
 }
 void Soldier::setPreviewMode(bool isPreview) {
-  is_preview_ = isPreview;
-  if (isPreview) {
-    original_opacity_ = getOpacity();
-    setOpacity(100);
-    stopAllStateActions();
-    enableAttackCD(false);  // 预览状态下不进行攻击
-  } else {
-    setOpacity(original_opacity_);
-    enableAttackCD(true);  // 退出预览启用冷却
-    changeState(SoldierState::kIdle);
-  }
+    is_preview_ = isPreview;
+    if (isPreview) {
+        original_opacity_ = getOpacity();
+        setOpacity(100);
+        stopAllStateActions();
+        enableAttackCD(false);  // 预览状态下不进行攻击
+        showHpBar(false);       // 预览模式下隐藏血条
+    }
+    else {
+        setOpacity(original_opacity_);
+        enableAttackCD(true);   // 退出预览启用冷却
+        showHpBar(false);       // 正常状态下默认隐藏血条，受伤时显示
+        changeState(SoldierState::kIdle);
+    }
 }
 void Soldier::enableAttackCD(bool enable) {
-  if (enable) {
-    // 这一步是必要的，否则无法持续攻击
-    this->schedule(
-        [=](float dt) {
-          if (!is_attack_CD_ready_ && attack_CD_remaining_ > 0) {
-            // 减少剩余冷却
-            attack_CD_remaining_ -= dt;
+    if (enable) {
+        // 这一步是必要的，否则无法持续攻击
+        this->schedule(
+            [=](float dt) {
+                if (!is_attack_CD_ready_ && attack_CD_remaining_ > 0) {
+                    // 减少剩余冷却
+                    attack_CD_remaining_ -= dt;
 
-            if (attack_CD_remaining_ <= 0) {
-              is_attack_CD_ready_ = true;
-              attack_CD_remaining_ = 0.0;
-              CCLOG("当前士兵攻击冷却结束");
-            }
-          }
-        },
-        // 定时器回调函数,直接使用lambda表达式，请勿使用bind,会导致unschedule无效
-        0.0f,               // 定时器执行间隔，每帧检测
-        CC_REPEAT_FOREVER,  // 定时器重复执行次数
-        0.0f,               // 定时器延迟执行时间（单位：秒）
-        kAttackCDSchedulerKey);
-    CCLOG("攻击冷却检测已启用");
-  } else {
-    this->unschedule(kAttackCDSchedulerKey);
-    CCLOG("攻击冷却检测已禁用");
-  }
+                    if (attack_CD_remaining_ <= 0) {
+                        is_attack_CD_ready_ = true;
+                        attack_CD_remaining_ = 0.0;
+                        CCLOG("当前士兵攻击冷却结束");
+                    }
+                }
+            },
+            // 定时器回调函数,直接使用lambda表达式，请勿使用bind,会导致unschedule无效
+            0.0f,               // 定时器执行间隔，每帧检测
+            CC_REPEAT_FOREVER,  // 定时器重复执行次数
+            0.0f,               // 定时器延迟执行时间（单位：秒）
+            kAttackCDSchedulerKey);
+        CCLOG("攻击冷却检测已启用");
+    }
+    else {
+        this->unschedule(kAttackCDSchedulerKey);
+        CCLOG("攻击冷却检测已禁用");
+    }
 }
 void Soldier::attackBuilding(Building* target) {
-  if (!target || target->isDestroyed() || !is_attack_CD_ready_) return;
+    if (!target || target->isDestroyed() || !is_attack_CD_ready_) return;
 
-  is_attack_CD_ready_ = false;
-  attack_CD_remaining_ = attack_CD_;
-  changeState(SoldierState::kAttack);
+    is_attack_CD_ready_ = false;
+    attack_CD_remaining_ = attack_CD_;
+    changeState(SoldierState::kAttack);
 
-  auto attackHitCallBack = CallFunc::create([this, target]() {
-    if (target && !target->isDestroyed()) {
-      target->takeDamage(this->attack_);
-      // 攻击完后切回 Idle，由 update() 根据 CD 决定何时发起下一次攻击
-      this->changeState(SoldierState::kIdle);
-    } else {
-      // 目标死了，找下一个
-      this->startAttack();
-    }
-  });
+    auto attackHitCallBack = CallFunc::create([this, target]() {
+        if (target && !target->isDestroyed()) {
+            target->takeDamage(this->attack_);
+            // 攻击完后切回 Idle，由 update() 根据 CD 决定何时发起下一次攻击
+            this->changeState(SoldierState::kIdle);
+        }
+        else {
+            // 目标死了，找下一个
+            this->startAttack();
+        }
+        });
 
-  // 假设动画时长 0.5s，伤害发生点也在 0.5s
-  this->runAction(
-      Sequence::create(DelayTime::create(0.5f), attackHitCallBack, nullptr));
+    // 假设动画时长 0.5s，伤害发生点也在 0.5s
+    this->runAction(
+        Sequence::create(DelayTime::create(0.5f), attackHitCallBack, nullptr));
 }
 
 void Soldier::recalculatePathTo(Building* target) {
-  if (!target) return;
+    if (!target) return;
 
-  auto pm = PlacementManager::getInstance();
-  Vec2 startTile = pm->worldToTile(getPosition());
-  Vec2 goalTile = pm->worldToTile(target->getPosition());
+    auto pm = PlacementManager::getInstance();
+    Vec2 startTile = pm->worldToTile(getPosition());
+    Vec2 goalTile = pm->worldToTile(target->getPosition());
 
-  int sx = std::max(0, std::min((int)startTile.x, pm->getMapWidth() - 1));
-  int sy = std::max(0, std::min((int)startTile.y, pm->getMapHeight() - 1));
-  int gx = std::max(0, std::min((int)goalTile.x, pm->getMapWidth() - 1));
-  int gy = std::max(0, std::min((int)goalTile.y, pm->getMapHeight() - 1));
+    int sx = std::max(0, std::min((int)startTile.x, pm->getMapWidth() - 1));
+    int sy = std::max(0, std::min((int)startTile.y, pm->getMapHeight() - 1));
+    int gx = std::max(0, std::min((int)goalTile.x, pm->getMapWidth() - 1));
+    int gy = std::max(0, std::min((int)goalTile.y, pm->getMapHeight() - 1));
 
-  int mapW = pm->getMapWidth();
-  int mapH = pm->getMapHeight();
-  GridPathFinder finder(mapW, mapH);
+    int mapW = pm->getMapWidth();
+    int mapH = pm->getMapHeight();
+    GridPathFinder finder(mapW, mapH);
 
-  // 1. 先假定所有格子都可走
-  for (int x = 0; x < mapW; ++x) {
-    for (int y = 0; y < mapH; ++y) {
-      finder.setWalkable(x, y, true);
-    }
-  }
-  if (getSoldierMoveType() == SoldierMoveType::kGround) {
-    // 2. 遍历场景中的建筑，用碰撞半径“画”出不可走区域(只有走在地面上的人要判断)
-    auto buildings = BuildingManager::getInstance()->getAllBuildings();
-
-    float myRadius = getCollisionRadius();
-    int buildingCount = 0;
-
-    int totalBlockedTiles = 0;
-    CCLOG(" BuildingManager found %d buildings, soldier r=%.1f",
-          (int)buildings.size(), myRadius);
-    for (auto building : buildings) {
-      if (!building || building->isDestroyed()) continue;
-
-      buildingCount++;
-      float bRadius = building->getCollisionRadius();
-      CCLOG(" Building[%d] pos(%.1f,%.1f) radius=%.1f", buildingCount,
-            building->getPosition().x, building->getPosition().y, bRadius);
-
-      float blockRadius = bRadius;
-      CCLOG(" blockRadius=%.1f", blockRadius);
-
-      // 以建筑为圆心，在一定范围内枚举所有 tile
-      cocos2d::Vec2 bWorldPos = building->getPosition();
-      cocos2d::Vec2 bTilePos = pm->worldToTile(bWorldPos);
-      int bx = (int)bTilePos.x;
-      int by = (int)bTilePos.y;
-
-      int maxTileOffset = (int)std::ceil(
-          blockRadius /
-          pm->getTileSize());  // 需要在PlacementManager里加个getTileSize()
-      int blockedTiles = 0;
-      for (int dx = -maxTileOffset; dx <= maxTileOffset; ++dx) {
-        for (int dy = -maxTileOffset; dy <= maxTileOffset; ++dy) {
-          int tx = bx + dx;
-          int ty = by + dy;
-          if ((tx == sx && ty == sy) || (tx == gx && ty == gy)) {
-            continue;  // 起点或终点，不标记为障碍
-          }
-          if (tx < 0 || tx >= mapW || ty < 0 || ty >= mapH) continue;
-
-          // 把 tile 中心转换到世界坐标，检查与建筑碰撞圆是否重叠
-          cocos2d::Vec2 tileWorld = pm->tileToWorldCenter((float)tx, (float)ty);
-          float dist = tileWorld.distance(bWorldPos);
-          if (dist < blockRadius) {
-            // 该格子对当前士兵来说是不可走的
-            finder.setWalkable(tx, ty, false);
-            blockedTiles++;
-            totalBlockedTiles++;
-          }
+    // 1. 先假定所有格子都可走
+    for (int x = 0; x < mapW; ++x) {
+        for (int y = 0; y < mapH; ++y) {
+            finder.setWalkable(x, y, true);
         }
-        CCLOG(" Building[%d] blocked %d tiles", buildingCount, blockedTiles);
-      }
-      CCLOG("Total %d buildings found", buildingCount);
     }
-  }
-  // 3. 用生成好的阻挡网格跑 A*
-  bool ok;
-  std::vector<cocos2d::Vec2> tiles;
-  std::tuple<bool, std::vector<cocos2d::Vec2>> result =
-      finder.findPath(sx, sy, gx, gy);
-  ok = std::get<0>(result);
-  tiles = std::get<1>(result);
-  pathTiles_.clear();
-  if (!ok) {
-    CCLOG("No path found from (%d,%d) to (%d,%d)", sx, sy, gx, gy);
-    return;
-  }
-  CCLOG("Path tiles size = %d", (int)tiles.size());
-  for (size_t i = 0; i < tiles.size(); ++i) {
-    CCLOG("  step %d: (%.0f, %.0f)", (int)i, tiles[i].x, tiles[i].y);
-  }
+    if (getSoldierMoveType() == SoldierMoveType::kGround) {
+        // 2. 遍历场景中的建筑，用碰撞半径"画"出不可走区域(只有走在地面上的人要判断)
+        auto buildings = BuildingManager::getInstance()->getAllBuildings();
 
-  pathTiles_ = tiles;  // tiles 里是 tile 坐标
-  currentPathIndex_ = 0;
+        float myRadius = getCollisionRadius();
+        int buildingCount = 0;
+
+        int totalBlockedTiles = 0;
+        CCLOG(" BuildingManager found %d buildings, soldier r=%.1f",
+            (int)buildings.size(), myRadius);
+        for (auto building : buildings) {
+            if (!building || building->isDestroyed()) continue;
+
+            buildingCount++;
+            float bRadius = building->getCollisionRadius();
+            CCLOG(" Building[%d] pos(%.1f,%.1f) radius=%.1f", buildingCount,
+                building->getPosition().x, building->getPosition().y, bRadius);
+
+            float blockRadius = bRadius;
+            CCLOG(" blockRadius=%.1f", blockRadius);
+
+            // 以建筑为圆心，在一定范围内枚举所有 tile
+            cocos2d::Vec2 bWorldPos = building->getPosition();
+            cocos2d::Vec2 bTilePos = pm->worldToTile(bWorldPos);
+            int bx = (int)bTilePos.x;
+            int by = (int)bTilePos.y;
+
+            int maxTileOffset = (int)std::ceil(
+                blockRadius /
+                pm->getTileSize());  // 需要在PlacementManager里加个getTileSize()
+            int blockedTiles = 0;
+            for (int dx = -maxTileOffset; dx <= maxTileOffset; ++dx) {
+                for (int dy = -maxTileOffset; dy <= maxTileOffset; ++dy) {
+                    int tx = bx + dx;
+                    int ty = by + dy;
+                    if ((tx == sx && ty == sy) || (tx == gx && ty == gy)) {
+                        continue;  // 起点或终点，不标记为障碍
+                    }
+                    if (tx < 0 || tx >= mapW || ty < 0 || ty >= mapH) continue;
+
+                    // 把 tile 中心转换到世界坐标，检查与建筑碰撞圆是否重叠
+                    cocos2d::Vec2 tileWorld = pm->tileToWorldCenter((float)tx, (float)ty);
+                    float dist = tileWorld.distance(bWorldPos);
+                    if (dist < blockRadius) {
+                        // 该格子对当前士兵来说是不可走的
+                        finder.setWalkable(tx, ty, false);
+                        blockedTiles++;
+                        totalBlockedTiles++;
+                    }
+                }
+                CCLOG(" Building[%d] blocked %d tiles", buildingCount, blockedTiles);
+            }
+            CCLOG("Total %d buildings found", buildingCount);
+        }
+    }
+    // 3. 用生成好的阻挡网格跑 A*
+    bool ok;
+    std::vector<cocos2d::Vec2> tiles;
+    std::tuple<bool, std::vector<cocos2d::Vec2>> result =
+        finder.findPath(sx, sy, gx, gy);
+    ok = std::get<0>(result);
+    tiles = std::get<1>(result);
+    pathTiles_.clear();
+    if (!ok) {
+        CCLOG("No path found from (%d,%d) to (%d,%d)", sx, sy, gx, gy);
+        return;
+    }
+    CCLOG("Path tiles size = %d", (int)tiles.size());
+    for (size_t i = 0; i < tiles.size(); ++i) {
+        CCLOG("  step %d: (%.0f, %.0f)", (int)i, tiles[i].x, tiles[i].y);
+    }
+
+    pathTiles_ = tiles;  // tiles 里是 tile 坐标
+    currentPathIndex_ = 0;
 }
 
 // 新增：移动到下一个路径点
 void Soldier::moveToNextPathPoint() {
-  // 1. 安全检查：如果自己死了，或者目标建筑已经不在了，重找目标
-  if (isDead()) return;
+    // 1. 安全检查：如果自己死了，或者目标建筑已经不在了，重找目标
+    if (isDead()) return;
 
-  if (!target_building_ || target_building_->isDestroyed()) {
-    CCLOG("Target lost or destroyed, finding next...");
-    this->startAttack();  // startAttack 负责寻找新目标并重新开启寻路
-    return;
-  }
+    if (!target_building_ || target_building_->isDestroyed()) {
+        CCLOG("Target lost or destroyed, finding next...");
+        this->startAttack();  // startAttack 负责寻找新目标并重新开启寻路
+        return;
+    }
 
-  // 2. 核心逻辑：检查是否进入攻击距离
-  // 距离计算：士兵中心到建筑中心的距离
-  float dist = getPosition().distance(target_building_->getPosition());
+    // 2. 核心逻辑：检查是否进入攻击距离
+    // 距离计算：士兵中心到建筑中心的距离
+    float dist = getPosition().distance(target_building_->getPosition());
 
-  // 判定：攻击距离 + 建筑半径（建筑是40像素半径）
-  // 如果进入射程，停止移动，开启攻击动作
-  if (dist <= (this->attack_range_ + 40.0f)) {
-    this->stopAllActions();
-    this->attackBuilding(target_building_);
-    return;
-  }
+    // 判定：攻击距离 + 建筑半径（建筑是40像素半径）
+    // 如果进入射程，停止移动，开启攻击动作
+    if (dist <= (this->attack_range_ + 40.0f)) {
+        this->stopAllActions();
+        this->attackBuilding(target_building_);
+        return;
+    }
 
-  // 3.
-  // 路径点检查：如果已经走完了所有路径点还没到攻击距离，说明路被堵死或目标不可达
-  if (pathTiles_.empty() || currentPathIndex_ >= (int)pathTiles_.size()) {
-    CCLOG("Path finished but not in range, recalculating...");
-    this->recalculatePathTo(target_building_);  // 尝试重新规划一次路径
-    return;
-  }
+    // 3.
+    // 路径点检查：如果已经走完了所有路径点还没到攻击距离，说明路被堵死或目标不可达
+    if (pathTiles_.empty() || currentPathIndex_ >= (int)pathTiles_.size()) {
+        CCLOG("Path finished but not in range, recalculating...");
+        this->recalculatePathTo(target_building_);  // 尝试重新规划一次路径
+        return;
+    }
 
-  // 4. 执行移动：向下一个 A* 路径点迈进
-  auto pm = PlacementManager::getInstance();
-  Vec2 nextTile = pathTiles_[currentPathIndex_];
-  Vec2 worldPos = pm->tileToWorldCenter(nextTile.x, nextTile.y);
+    // 4. 执行移动：向下一个 A* 路径点迈进
+    auto pm = PlacementManager::getInstance();
+    Vec2 nextTile = pathTiles_[currentPathIndex_];
+    Vec2 worldPos = pm->tileToWorldCenter(nextTile.x, nextTile.y);
 
-  currentPathIndex_++;  // 索引指向下一个
+    currentPathIndex_++;  // 索引指向下一个
 
-  changeState(SoldierState::kMove);
+    changeState(SoldierState::kMove);
 
-  float moveDistance = getPosition().distance(worldPos);
-  float moveTime = moveDistance / speed_;
+    float moveDistance = getPosition().distance(worldPos);
+    float moveTime = moveDistance / speed_;
 
-  auto moveAction = MoveTo::create(moveTime, worldPos);
-  // 递归调用：到达这个点后，继续检查是否到射程，或者走向下一个点
-  auto callback = CallFunc::create([this]() { this->moveToNextPathPoint(); });
+    auto moveAction = MoveTo::create(moveTime, worldPos);
+    // 递归调用：到达这个点后，继续检查是否到射程，或者走向下一个点
+    auto callback = CallFunc::create([this]() { this->moveToNextPathPoint(); });
 
-  this->runAction(Sequence::create(moveAction, callback, nullptr));
+    this->runAction(Sequence::create(moveAction, callback, nullptr));
 }
 
 void Soldier::setSpeed(float speed) { speed_ = speed; }
 void Soldier::createPhysicsBody(float radius) {
-  // 仅设置碰撞半径，用于手动检测
-  setCollisionRadius(radius);
-  scheduleUpdate();  // 开启update检测
+    // 仅设置碰撞半径，用于手动检测
+    setCollisionRadius(radius);
+    scheduleUpdate();  // 开启update检测
+
+    // 更新血条宽度
+    _hpBarWidth = radius * 1.5f;
 }
 void Soldier::update(float dt) {
-  Node::update(dt);
-  if (isDead()) return;
+    Node::update(dt);
 
-  // 第一步：进行碰撞检测，防止重叠
-  Vec2 myPos = this->getPosition();
-  float myRadius = this->getCollisionRadius();
-  Vec2 totalCorrection(0, 0);
-  auto pm = PlacementManager ::getInstance();
+    // 更新血条显示
+    updateHpBar();
 
-  for (auto otherSoldier : pm->getSoldiers()) {
-    if (otherSoldier == this || !otherSoldier->isVisible()) continue;
+    if (isDead()) return;
 
-    // 仅保留士兵间的挤开，防止叠罗汉
-    if (otherSoldier && !otherSoldier->isDead()) {
-      float dist = myPos.distance(otherSoldier->getPosition());
-      float minDist = myRadius + otherSoldier->getCollisionRadius();
-      if (dist < minDist && dist > 0.1f) {
-        totalCorrection +=
-            (myPos - otherSoldier->getPosition()).getNormalized() *
-            (minDist - dist) * 0.7f;
-      }
+    // 第一步：进行碰撞检测，防止重叠
+    Vec2 myPos = this->getPosition();
+    float myRadius = this->getCollisionRadius();
+    Vec2 totalCorrection(0, 0);
+    auto pm = PlacementManager::getInstance();
+
+    for (auto otherSoldier : pm->getSoldiers()) {
+        if (otherSoldier == this || !otherSoldier->isVisible()) continue;
+
+        // 仅保留士兵间的挤开，防止叠罗汉
+        if (otherSoldier && !otherSoldier->isDead()) {
+            float dist = myPos.distance(otherSoldier->getPosition());
+            float minDist = myRadius + otherSoldier->getCollisionRadius();
+            if (dist < minDist && dist > 0.1f) {
+                totalCorrection +=
+                    (myPos - otherSoldier->getPosition()).getNormalized() *
+                    (minDist - dist) * 0.7f;
+            }
+        }
     }
-  }
 
-  if (totalCorrection != Vec2::ZERO) {
-    this->setPosition(myPos + totalCorrection);
-  }
-
-  // 第二步：核心决策逻辑（攻击循环）
-  //  只有在位移修正完成后，这里的 getPosition() 才是准确的
-  if (current_state_ == SoldierState::kIdle && is_attack_CD_ready_ &&
-      target_building_) {
-    float dist = getPosition().distance(target_building_->getPosition());
-
-    if (dist <= (attack_range_ + Building::getCollisionRadius())) {
-      if (!target_building_->isDestroyed()) {
-        this->attackBuilding(target_building_);
-      } else {
-        this->startAttack();
-      }
-    } else if (current_state_ != SoldierState::kMove) {
-      // 如果不在射程，且不在移动中，可能需要重新寻路靠近
-      this->recalculatePathTo(target_building_);
+    if (totalCorrection != Vec2::ZERO) {
+        this->setPosition(myPos + totalCorrection);
     }
-  }
+
+    // 第二步：核心决策逻辑（攻击循环）
+    //  只有在位移修正完成后，这里的 getPosition() 才是准确的
+    if (current_state_ == SoldierState::kIdle && is_attack_CD_ready_ &&
+        target_building_) {
+        float dist = getPosition().distance(target_building_->getPosition());
+
+        if (dist <= (attack_range_ + Building::getCollisionRadius())) {
+            if (!target_building_->isDestroyed()) {
+                this->attackBuilding(target_building_);
+            }
+            else {
+                this->startAttack();
+            }
+        }
+        else if (current_state_ != SoldierState::kMove) {
+            // 如果不在射程，且不在移动中，可能需要重新寻路靠近
+            this->recalculatePathTo(target_building_);
+        }
+    }
 }
 
 Building* Soldier::findBestTargetBuilding() {
-  auto buildings = BuildingManager::getInstance()->getAllBuildings();
-  if (buildings.empty()) return nullptr;
+    auto buildings = BuildingManager::getInstance()->getAllBuildings();
+    if (buildings.empty()) return nullptr;
 
-  Vec2 myPos = getPosition();
-  Building* bestTarget = nullptr;
-  float bestDist = FLT_MAX;
+    Vec2 myPos = getPosition();
+    Building* bestTarget = nullptr;
+    float bestDist = FLT_MAX;
 
-  // 1️ 先找“喜好类型”里最近的
-  const auto& preferredTypes = SoldierTargetPreference::getPreferredTargets(
-      getSoldierType());  // 可能为空
-  if (!preferredTypes.empty()) {
-    for (auto* building : buildings) {
-      if (!building || building->isDestroyed()) continue;
-
-      BuildingType type = building->getType();
-      // 是否是喜好类型
-      bool isPreferred = std::find(preferredTypes.begin(), preferredTypes.end(),
-                                   type) != preferredTypes.end();
-      if (!isPreferred) continue;
-
-      float dist = myPos.distance(building->getPosition());
-      if (dist < bestDist) {
-        bestDist = dist;
-        bestTarget = building;
-      }
-    }
-    // 如果找到了喜好目标，直接返回
-    if (bestTarget) return bestTarget;
-  }
-
-  // 2️ 没有喜好目标 -> 在剩余建筑中找最近的
-  bestDist = FLT_MAX;
-  for (auto* building : buildings) {
-    if (!building || building->isDestroyed()) continue;
-
-    // 可选：如果有喜好列表，就排除这些类型，只在“非喜好”中找最近
+    // 1️ 先找"喜好类型"里最近的
+    const auto& preferredTypes = SoldierTargetPreference::getPreferredTargets(
+        getSoldierType());  // 可能为空
     if (!preferredTypes.empty()) {
-      BuildingType type = building->getType();
-      bool isPreferred = std::find(preferredTypes.begin(), preferredTypes.end(),
-                                   type) != preferredTypes.end();
-      if (isPreferred) continue;  // 喜好类在上面已经搜过了
+        for (auto* building : buildings) {
+            if (!building || building->isDestroyed()) continue;
+
+            BuildingType type = building->getType();
+            // 是否是喜好类型
+            bool isPreferred = std::find(preferredTypes.begin(), preferredTypes.end(),
+                type) != preferredTypes.end();
+            if (!isPreferred) continue;
+
+            float dist = myPos.distance(building->getPosition());
+            if (dist < bestDist) {
+                bestDist = dist;
+                bestTarget = building;
+            }
+        }
+        // 如果找到了喜好目标，直接返回
+        if (bestTarget) return bestTarget;
     }
 
-    float dist = myPos.distance(building->getPosition());
-    if (dist < bestDist) {
-      bestDist = dist;
-      bestTarget = building;
-    }
-  }
+    // 2️ 没有喜好目标 -> 在剩余建筑中找最近的
+    bestDist = FLT_MAX;
+    for (auto* building : buildings) {
+        if (!building || building->isDestroyed()) continue;
 
-  return bestTarget;
+        // 可选：如果有喜好列表，就排除这些类型，只在"非喜好"中找最近
+        if (!preferredTypes.empty()) {
+            BuildingType type = building->getType();
+            bool isPreferred = std::find(preferredTypes.begin(), preferredTypes.end(),
+                type) != preferredTypes.end();
+            if (isPreferred) continue;  // 喜好类在上面已经搜过了
+        }
+
+        float dist = myPos.distance(building->getPosition());
+        if (dist < bestDist) {
+            bestDist = dist;
+            bestTarget = building;
+        }
+    }
+
+    return bestTarget;
 }
 void Soldier::startAttack() {
-  if (isDead()) return;
+    if (isDead()) return;
 
-  // 1. 寻找最近的敌方建筑
-  Building* nextTarget = this->findBestTargetBuilding();
+    // 1. 寻找最近的敌方建筑
+    Building* nextTarget = this->findBestTargetBuilding();
 
-  if (nextTarget) {
-    this->setTargetBuilding(nextTarget);
-    // 2. 重新计算路径
-    this->recalculatePathTo(nextTarget);
-    // 3. 开始移动
-    this->moveToNextPathPoint();
-  } else {
-    // 4. 地面上没有建筑了，进入待机
-    this->changeState(SoldierState::kIdle);
-    CCLOG("No more targets on map.");
-  }
+    if (nextTarget) {
+        this->setTargetBuilding(nextTarget);
+        // 2. 重新计算路径
+        this->recalculatePathTo(nextTarget);
+        // 3. 开始移动
+        this->moveToNextPathPoint();
+    }
+    else {
+        // 4. 地面上没有建筑了，进入待机
+        this->changeState(SoldierState::kIdle);
+        CCLOG("No more targets on map.");
+    }
 }
