@@ -129,6 +129,7 @@ void Soldier::setPreviewMode(bool isPreview) {
 }
 void Soldier::enableAttackCD(bool enable) {
   if (enable) {
+    // 这一步是必要的，否则无法持续攻击
     this->schedule(
         [=](float dt) {
           if (!is_attack_CD_ready_ && attack_CD_remaining_ > 0) {
@@ -359,16 +360,7 @@ void Soldier::update(float dt) {
     this->setPosition(myPos + totalCorrection);
   }
 
-  // 第二步：更新 CD 计时器
-  if (!is_attack_CD_ready_) {
-    attack_CD_remaining_ -= dt;
-    if (attack_CD_remaining_ <= 0) {
-      is_attack_CD_ready_ = true;
-      attack_CD_remaining_ = 0;
-    }
-  }
-
-  // 第三步：核心决策逻辑（攻击循环）
+  // 第二步：核心决策逻辑（攻击循环）
   //  只有在位移修正完成后，这里的 getPosition() 才是准确的
   if (current_state_ == SoldierState::kIdle && is_attack_CD_ready_ &&
       target_building_) {
