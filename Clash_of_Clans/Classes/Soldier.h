@@ -34,7 +34,7 @@ class Soldier : public Sprite {
   // 通用属性操作属性操作
 
   // 受到伤害，数值为damage
-  void takeDamage(int damage);
+  virtual void takeDamage(int damage);
   // 调整移动速度
   void setSpeed(float speed);
   // 返回当前血量
