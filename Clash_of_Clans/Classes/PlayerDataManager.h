@@ -34,8 +34,8 @@ class PlayerDataManager : public cocos2d::Ref {
   int getGoldGrowthRate() const { return gold_growth_rate; };
   // 设置金币数量（保存到本地）
   void setGold(int gold);
-  // 设置金币上限（保存到本地）
-  void setGoldLimit(int limit);
+  // 设置金币上限
+  void setGoldLimit();
   // 设置金币回复速率
   void setGoldGrowthRate(int rate);
 
@@ -47,8 +47,8 @@ class PlayerDataManager : public cocos2d::Ref {
   int getElixirGrowthRate() const { return elixir_growth_rate; };
   // 设置圣水数量（保存到本地）
   void setElixir(int elixir);
-  // 设置圣水上限（保存到本地）
-  void setElixirLimit(int limit);
+  // 设置圣水上限
+  void setElixirLimit();
   // 设置圣水回复速率
   void setElixirGrowthRate(int rate);
 
@@ -60,8 +60,8 @@ class PlayerDataManager : public cocos2d::Ref {
   int getBuilderGrowthRate() const { return builder_growth_rate; };
   // 设置建筑工人数量（保存到本地）
   void setBuilder(int builder);
-  // 设置建筑工人上限（保存到本地）
-  void setBuilderLimit(int limit);
+  // 设置建筑工人上限
+  void setBuilderLimit();
   // 设置建筑工人回复速率
   void setBuilderGrowthRate(int rate);
 

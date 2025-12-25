@@ -4,6 +4,9 @@
 
 #include "PlayerDataManager.h"
 
+#include "BuildingManager.h"
+#include "ResourceBuilding.h"
+
 // 使用别名进行缩写，请勿在.h文件中使用
 using PDM = PlayerDataManager;
 // 对static变量进行类外初始化
@@ -58,12 +61,17 @@ void PDM::setGold(int gold) {
   syncGoldToLocal();
   CCLOG("金币已更新为：%d", gold_);
 }
-void PDM::setGoldLimit(int limit) {
-  if (limit < 0) {
-    limit = 100;
+void PDM::setGoldLimit() {
+  gold_limit_ = 100;  // 初始上限为100，每个储存型建筑加一点
+  auto buildings = BuildingManager::getInstance()->getAllBuildings();
+  for (auto building : buildings) {
+    if (building->getType() == BuildingType::STORAGE) {
+      auto storage = dynamic_cast<ResourceBuilding*>(building);
+      if (storage->getResType() == ResourceType::GOLD)
+        gold_limit_ += storage->getMaxCapacity();
+    }
   }
-  gold_limit_ = limit;
-  syncGoldLimitToLocal();
+
   CCLOG("金币上限已更新为：%d", gold_limit_);
 }
 void PDM::setGoldGrowthRate(int rate) {
@@ -88,12 +96,17 @@ void PDM::setElixir(int elixir) {
   syncElixirToLocal();
   CCLOG("圣水已更新为：%d", elixir_);
 }
-void PDM::setElixirLimit(int limit) {
-  if (limit < 0) {
-    limit = 100;
+void PDM::setElixirLimit() {
+  elixir_limit_ = 100;  // 初始上限为100，每个储存型建筑加一点
+  auto buildings = BuildingManager::getInstance()->getAllBuildings();
+  for (auto building : buildings) {
+    if (building->getType() == BuildingType::STORAGE) {
+      auto storage = dynamic_cast<ResourceBuilding*>(building);
+      if (storage->getResType() == ResourceType::ELIXIR)
+        elixir_limit_ += storage->getMaxCapacity();
+    }
   }
-  elixir_limit_ = limit;
-  syncElixirLimitToLocal();
+
   CCLOG("圣水上限已更新为：%d", elixir_limit_);
 }
 void PDM::setElixirGrowthRate(int rate) {
@@ -101,7 +114,7 @@ void PDM::setElixirGrowthRate(int rate) {
     rate = 1;
   }
   elixir_growth_rate = rate;
-  syncElixirGrowRateToLocal();
+
   CCLOG("圣水增长速率已更新为：%d", rate);
 }
 void PDM::setBuilder(int builder) {
@@ -114,12 +127,17 @@ void PDM::setBuilder(int builder) {
   syncBuilderToLocal();
   CCLOG("建筑工人已更新为：%d", builder_);
 }
-void PDM::setBuilderLimit(int limit) {
-  if (limit < 0) {
-    limit = 100;
+void PDM::setBuilderLimit() {
+  builder_limit_ = 100;  // 初始上限为100，每个储存型建筑加一点
+  auto buildings = BuildingManager::getInstance()->getAllBuildings();
+  for (auto building : buildings) {
+    if (building->getType() == BuildingType::STORAGE) {
+      auto storage = dynamic_cast<ResourceBuilding*>(building);
+      if (storage->getResType() == ResourceType::BUILDER)
+        builder_limit_ += storage->getMaxCapacity();
+    }
   }
-  builder_limit_ = limit;
-  syncBuilderLimitToLocal();
+
   CCLOG("建筑工人上限已更新为：%d", builder_limit_);
 }
 void PDM::setBuilderGrowthRate(int rate) {
@@ -135,20 +153,12 @@ void PDM::syncGoldToLocal() {
   userDefault_->setIntegerForKey(kKeyGold.c_str(), gold_);
   userDefault_->flush();
 }
-void PDM::syncGoldLimitToLocal() {
-  userDefault_->setIntegerForKey(kKeyGoldLimit.c_str(), gold_limit_);
-  userDefault_->flush();
-}
 void PDM::syncGoldGrowRateToLocal() {
   userDefault_->setIntegerForKey(kKeyGoldGrowthRate.c_str(), gold_growth_rate);
   userDefault_->flush();
 }
 void PDM::syncElixirToLocal() {
   userDefault_->setIntegerForKey(kKeyElixir.c_str(), elixir_);
-  userDefault_->flush();
-}
-void PDM::syncElixirLimitToLocal() {
-  userDefault_->setIntegerForKey(kKeyElixirLimit.c_str(), elixir_limit_);
   userDefault_->flush();
 }
 void PDM::syncElixirGrowRateToLocal() {
@@ -158,10 +168,6 @@ void PDM::syncElixirGrowRateToLocal() {
 }
 void PDM::syncBuilderToLocal() {
   userDefault_->setIntegerForKey(kKeyBuilder.c_str(), builder_);
-  userDefault_->flush();
-}
-void PDM::syncBuilderLimitToLocal() {
-  userDefault_->setIntegerForKey(kKeyBuilderLimit.c_str(), builder_limit_);
   userDefault_->flush();
 }
 void PDM::syncBuilderGrowRateToLocal() {
@@ -198,11 +204,8 @@ void PDM::syncBuildingToLocal() {
 
 void PDM::syncAllDataToLocal() {
   syncGoldToLocal();
-  syncGoldLimitToLocal();
   syncElixirToLocal();
-  syncElixirLimitToLocal();
   syncBuilderToLocal();
-  syncBuilderLimitToLocal();
   syncTimeToLocal();
   syncBuildingToLocal();
 }
@@ -272,15 +275,13 @@ void PlayerDataManager::clearBuildingData() { buildingDatas_.clear(); }
 
 void PDM::loadData() {
   // 从本地存储重新加载数据（复用initData中的读取逻辑）
-  setGoldLimit(
-      userDefault_->getIntegerForKey(kKeyGoldLimit.c_str(), gold_limit_));
+  setGoldLimit();
   setGold(userDefault_->getIntegerForKey(kKeyGold.c_str(), gold_));
-  setElixirLimit(
-      userDefault_->getIntegerForKey(kKeyElixirLimit.c_str(), elixir_limit_));
+
+  setElixirLimit();
   setElixir(userDefault_->getIntegerForKey(kKeyElixir.c_str(), elixir_));
 
-  setBuilderLimit(
-      userDefault_->getIntegerForKey(kKeyBuilderLimit.c_str(), builder_limit_));
+  setBuilderLimit();
   setBuilder(userDefault_->getIntegerForKey(kKeyBuilder.c_str(), builder_));
 
   setGoldGrowthRate(userDefault_->getIntegerForKey(kKeyGoldGrowthRate.c_str(),
