@@ -18,7 +18,7 @@ class BallonSoldier : public Soldier {
     return SoldierMoveType::kAir;
   }
   // 职业逻辑
-  void takeDamage(int damage);
+  void takeDamage(int damage) override;
   void attackSoldier(Soldier* target) override;
   void attackBuilding(Building* target) override;
 

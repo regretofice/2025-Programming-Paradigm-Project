@@ -119,7 +119,7 @@ BallonSoldier::~BallonSoldier() {
 
 void BallonSoldier::attackBuilding(Building* target) {
   if (!target || target->isDestroyed() || !is_attack_CD_ready_ || isDead()) {
-    this->startAttack();  // 🟢 完全保留原有逻辑
+    this->startAttack();  //  完全保留原有逻辑
     return;
   }
 
