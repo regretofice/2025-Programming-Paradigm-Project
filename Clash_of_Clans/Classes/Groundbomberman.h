@@ -41,8 +41,8 @@ class Bomberman : public Soldier {
   const std::string kAnimDieKey = "bomberman_die";
 
   const float EXPLODE_DELAY = 2.0f;  // 爆炸延迟
-  const int EXPLODE_RADIUS = 240;    // 爆炸半径
-  const int EXPLODE_DAMAGE = 300;    // 爆炸伤害
+  const int EXPLODE_RADIUS = 200;    // 爆炸半径
+  const int EXPLODE_DAMAGE = 100;    // 爆炸伤害
 };
 
 #endif  // __GROUND_BOMBERMAN_H__

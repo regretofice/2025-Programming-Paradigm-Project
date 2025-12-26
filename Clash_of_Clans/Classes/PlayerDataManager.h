@@ -12,6 +12,7 @@
 struct BuildingData {
   BuildingType buildingType;
   ResourceType resourceType;
+  TargetType targetType;
   float positionX;
   float positionY;
   int level;

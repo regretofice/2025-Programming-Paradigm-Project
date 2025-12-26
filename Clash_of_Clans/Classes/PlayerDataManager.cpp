@@ -7,6 +7,7 @@
 #include "BuildingManager.h"
 #include "ResourceBuilding.h"
 #include"ResourceStorageBuilding.h"
+#include "BuildingEnums.h"
 
 // 使用别名进行缩写，请勿在.h文件中使用
 using PDM = PlayerDataManager;
@@ -200,6 +201,16 @@ void PDM::syncBuildingToLocal() {
       userDefault_->setIntegerForKey(
           (prefix + "ResourceType").c_str(),
           static_cast<int>(ResourceType::NORESOURCE));
+    }
+    if (buildingDatas_[i].buildingType == BuildingType::DEFENSE) {
+        userDefault_->setIntegerForKey(
+            (prefix + "targetType").c_str(),
+            static_cast<int>(buildingDatas_[i].targetType));
+    }
+    else {
+        userDefault_->setIntegerForKey(
+            (prefix + "targetType").c_str(),
+            static_cast<int>(TargetType::NONE));
     }
 
     userDefault_->setFloatForKey((prefix + "x").c_str(),

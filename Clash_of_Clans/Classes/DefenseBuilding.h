@@ -6,12 +6,7 @@
 // 前向声明敌人类（避免循环引用）
 class Soldier;
 
-// 防御建筑可以攻击的目标类型
-enum class TargetType {
-  GROUND_ONLY,  // 只能攻击地面目标
-  AIR_ONLY,     // 只能攻击空中目标
-  BOTH          // 可以攻击地面和空中目标
-};
+
 
 class DefenseBuilding : public Building {
  private:

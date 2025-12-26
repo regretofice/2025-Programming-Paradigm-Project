@@ -21,6 +21,14 @@ enum class AttackType {
   AREA_DAMAGE,    // 范围伤害
 };
 
+// 防御建筑可以攻击的目标类型
+enum class TargetType {
+	GROUND_ONLY,  // 只能攻击地面目标
+	AIR_ONLY,     // 只能攻击空中目标
+	BOTH,         // 可以攻击地面和空中目标
+	NONE          // 无目标
+};
+
 // 资源类型
 enum class ResourceType {
   GOLD,     // 金币

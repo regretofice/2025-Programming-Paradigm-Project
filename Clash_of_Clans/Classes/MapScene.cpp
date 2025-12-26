@@ -383,6 +383,14 @@ void MapScene::createPlacementMenu() {
     onBuildingButtonClicked(sender, 7);  // 7代表圣水瓶
   });
   menuPanel->addChild(elixirStorageBtn);
+  // 建筑按钮8 - 防空火箭
+  auto firecrackersBtn = ui::Button::create("firecrackers_01.png");
+  firecrackersBtn->setPosition(Vec2(60, startY - 580));
+  firecrackersBtn->setScale(0.8f);
+  firecrackersBtn->addClickEventListener([this](Ref* sender) {
+      onBuildingButtonClicked(sender, 8);  // 8代表防空火箭
+      });
+  menuPanel->addChild(firecrackersBtn);
 
   // 士兵按钮1 - 野蛮人
   auto barbarianBtn = ui::Button::create("rarbarian_icon.png");
@@ -556,42 +564,65 @@ void MapScene::loadSavedBuildings() {
 
     // 根据建筑类型创建对应的建筑
 
-    /*if (data.type == (int)BuildingType::RESOURCE) {
-      building = ResourceBuilding::create(
-          "gold_mine_icon_01.png", data.name, CampType::PLAYER, data.level, 3,
-          100 * data.level, 60, 100 * data.level, 5.0f, ResourceType::GOLD,
-          10 * data.level, 500 * data.level);
-    } else if (data.type == (int)BuildingType::DEFENSE) {
-      building = DefenseBuilding::create(
-          "tower_icon_01.png", data.name, CampType::PLAYER, data.level, 3,
-          200 * data.level, 50, 150 * data.level, 8.0f, 10 * data.level, 150,
-          AttackType::SINGLE_TARGET, 2.0f);
-    } else if (data.type == (int)BuildingType::RESOURCE) {
-      building = ResourceBuilding::create(
-          "base_camp_01.png", data.name, CampType::PLAYER, data.level, 3,
-          200 * data.level, 50, 150 * data.level, 8.0f,
-          ResourceType::NORESOURCE, 0, 0);
-    } else if (data.type == (int)BuildingType::RESOURCE) {
-      building = ResourceBuilding::create(
-          "elixir_collector_icon_01.png", data.name, CampType::PLAYER,
-          data.level, 3, 100 * data.level, 60, 100 * data.level, 5.0f,
-          ResourceType::ELIXIR, 10 * data.level, 500 * data.level);
-    } else if (data.type == (int)BuildingType::DEFENSE) {
-      building = DefenseBuilding::create(
-          "cannon_01.png", data.name, CampType::PLAYER, data.level, 3,
-          200 * data.level, 50, 150 * data.level, 8.0f, 10 * data.level, 150,
-          AttackType::SINGLE_TARGET, 2.0f, TargetType::GROUND_ONLY);
-    } else if (data.type == (int)BuildingType::STORAGE) {
-      building = ResourceStorageBuilding::create(
-          "Gold_Storage_01.png", data.name, CampType::PLAYER, data.level, 3,
-          400 * data.level, 50, 100 * data.level, 5.0f, ResourceType::GOLD,
-          1000 * data.level, 0.5f);
-    } else if (data.type == (int)BuildingType::STORAGE) {
-      building = ResourceStorageBuilding::create(
-          "Elixir_Storage_01.png", data.name, CampType::PLAYER, data.level, 3,
-          400 * data.level, 50, 100 * data.level, 5.0f, ResourceType::ELIXIR,
-          1000 * data.level, 0.5f);
-    }*/
+    if (data.buildingType == BuildingType::RESOURCE) {
+        if (data.resourceType == ResourceType::GOLD) {
+            building = ResourceBuilding::create(
+                "gold_mine_icon_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
+                100 * data.level, 60, 100 * data.level, 5.0f, ResourceType::GOLD,
+                10 * data.level, 50 * data.level);
+        }
+        else if (data.resourceType == ResourceType::ELIXIR){
+            building = ResourceBuilding::create(
+                "elixir_collector_icon_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
+                100 * data.level, 60, 100 * data.level, 5.0f, ResourceType::ELIXIR,
+                10 * data.level, 50 * data.level);
+        }
+        else {
+            building = ResourceBuilding::create(
+                "base_camp_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
+                100 * data.level, 60, 100 * data.level, 5.0f, ResourceType::BUILDER,
+                0, 2 + data.level);
+        }
+    } else if (data.buildingType == BuildingType::DEFENSE) {
+        if (data.targetType == TargetType::AIR_ONLY) {
+            building = DefenseBuilding::create(
+                "firecrackers_0"+ std::to_string(data.level) +".png", data.name, CampType::PLAYER, data.level, 3,
+                200 * data.level, 50, 150 * data.level, 8.0f, 10 * data.level, 200,
+                AttackType::SINGLE_TARGET, 2.0f, TargetType::AIR_ONLY);
+        }
+        else if (data.targetType == TargetType::GROUND_ONLY){
+            building = DefenseBuilding::create(
+                "cannon_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
+                200 * data.level, 50, 150 * data.level, 8.0f, 10 * data.level, 220,
+                AttackType::SINGLE_TARGET, 2.0f, TargetType::GROUND_ONLY);
+        }
+        else {
+            building = DefenseBuilding::create(
+                "tower_icon_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
+                200 * data.level, 50, 150 * data.level, 8.0f, 10 * data.level, 200,
+                AttackType::SINGLE_TARGET, 2.0f);
+        }
+     
+    } else if (data.buildingType == BuildingType::STORAGE) {
+        if (data.resourceType == ResourceType::GOLD) {
+            building = ResourceStorageBuilding::create(
+                "Gold_Storage_01.png", data.name, CampType::PLAYER, data.level, 3,
+                400 * data.level, 50, 100 * data.level, 5.0f, ResourceType::GOLD,
+                1000 * data.level, 0.5f);
+        }
+        else if (data.resourceType == ResourceType::ELIXIR) {
+            building = ResourceStorageBuilding::create(
+                "Elixir_Storage_01.png", data.name, CampType::PLAYER, data.level, 3,
+                400 * data.level, 50, 100 * data.level, 5.0f, ResourceType::ELIXIR,
+                1000 * data.level, 0.5f);
+        }
+        else {
+            building = ResourceStorageBuilding::create(
+                "base_camp_01.png", data.name, CampType::PLAYER, data.level, 3,
+                200 * data.level, 50, 150 * data.level, 8.0f,
+                ResourceType::BUILDER, 2 + data.level, 0);
+        }
+    }
     if (building) {
       building->setPosition(Vec2(data.positionX, data.positionY));
       this->addChild(building, 5);
