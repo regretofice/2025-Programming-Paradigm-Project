@@ -6,6 +6,7 @@
 
 #include "BuildingManager.h"
 #include "ResourceBuilding.h"
+#include"ResourceStorageBuilding.h"
 
 // 使用别名进行缩写，请勿在.h文件中使用
 using PDM = PlayerDataManager;
@@ -66,9 +67,9 @@ void PDM::setGoldLimit() {
   auto buildings = BuildingManager::getInstance()->getAllBuildings();
   for (auto building : buildings) {
     if (building->getType() == BuildingType::STORAGE) {
-      auto storage = dynamic_cast<ResourceBuilding*>(building);
+      auto storage = dynamic_cast<ResourceStorageBuilding*>(building);
       if (storage->getResType() == ResourceType::GOLD)
-        gold_limit_ += storage->getMaxCapacity();
+        gold_limit_ += storage->getMaxStorageCapacity();
     }
   }
 
@@ -101,9 +102,9 @@ void PDM::setElixirLimit() {
   auto buildings = BuildingManager::getInstance()->getAllBuildings();
   for (auto building : buildings) {
     if (building->getType() == BuildingType::STORAGE) {
-      auto storage = dynamic_cast<ResourceBuilding*>(building);
+      auto storage = dynamic_cast<ResourceStorageBuilding*>(building);
       if (storage->getResType() == ResourceType::ELIXIR)
-        elixir_limit_ += storage->getMaxCapacity();
+        elixir_limit_ += storage->getMaxStorageCapacity();
     }
   }
 
@@ -187,8 +188,20 @@ void PDM::syncBuildingToLocal() {
 
   for (int i = 0; i < buildingCount; ++i) {
     std::string prefix = "building_" + std::to_string(i) + "_";
-    userDefault_->setIntegerForKey((prefix + "type").c_str(),
-                                   buildingDatas_[i].type);
+    userDefault_->setIntegerForKey(
+        (prefix + "BuildingType").c_str(),
+        static_cast<int>(buildingDatas_[i].buildingType));
+    if (buildingDatas_[i].buildingType == BuildingType::RESOURCE ||
+        buildingDatas_[i].buildingType == BuildingType::STORAGE) {
+      userDefault_->setIntegerForKey(
+          (prefix + "ResourceType").c_str(),
+          static_cast<int>(buildingDatas_[i].resourceType));
+    } else {
+      userDefault_->setIntegerForKey(
+          (prefix + "ResourceType").c_str(),
+          static_cast<int>(ResourceType::NORESOURCE));
+    }
+
     userDefault_->setFloatForKey((prefix + "x").c_str(),
                                  buildingDatas_[i].positionX);
     userDefault_->setFloatForKey((prefix + "y").c_str(),
@@ -301,7 +314,10 @@ void PDM::loadData() {
   for (int i = 0; i < buildingCount; ++i) {
     std::string prefix = "building_" + std::to_string(i) + "_";
     BuildingData data;
-    data.type = userDefault_->getIntegerForKey((prefix + "type").c_str(), 0);
+    data.buildingType = static_cast<BuildingType>(
+        userDefault_->getIntegerForKey((prefix + "BuildingType").c_str(), 0));
+    data.resourceType = static_cast<ResourceType>(
+        userDefault_->getIntegerForKey((prefix + "ResourceType").c_str(), 0));
     data.positionX = userDefault_->getFloatForKey((prefix + "x").c_str(), 0);
     data.positionY = userDefault_->getFloatForKey((prefix + "y").c_str(), 0);
     data.level = userDefault_->getIntegerForKey((prefix + "level").c_str(), 1);

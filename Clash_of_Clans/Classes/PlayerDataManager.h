@@ -5,11 +5,13 @@
 #pragma execution_character_set("utf-8")
 #endif
 
+#include "BuildingEnums.h"
 #include "TimeTools.h"
 #include "cocos2d.h"
 
 struct BuildingData {
-  int type;
+  BuildingType buildingType;
+  ResourceType resourceType;
   float positionX;
   float positionY;
   int level;
@@ -136,13 +138,10 @@ class PlayerDataManager : public cocos2d::Ref {
   // 数据同步到本地文件的端口
 
   void syncGoldToLocal();
-  void syncGoldLimitToLocal();
   void syncGoldGrowRateToLocal();
   void syncElixirToLocal();
-  void syncElixirLimitToLocal();
   void syncElixirGrowRateToLocal();
   void syncBuilderToLocal();
-  void syncBuilderLimitToLocal();
   void syncBuilderGrowRateToLocal();
   void syncAllDataToLocal();
   void syncTimeToLocal();
