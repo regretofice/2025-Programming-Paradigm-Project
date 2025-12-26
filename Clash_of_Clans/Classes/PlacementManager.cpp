@@ -289,13 +289,13 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
           10, 150, AttackType::SINGLE_TARGET, 2.0f, TargetType::GROUND_ONLY);
     } else if (_currentId == 6) {
       newBuilding = ResourceStorageBuilding::create(
-          "Gold_Storage_01.png", "储金罐", CampType::PLAYER, 1, 3, 400, 50, 100,
-          5.0f, ResourceType::GOLD, 1000, 0.5f);
+            "Gold_Storage_01.png", "储金罐", CampType::PLAYER, 1, 3,
+            400, 50, 100, 5.0f, ResourceType::GOLD, 1000, 0.5f);
       pdm->setGoldLimit();
     } else if (_currentId == 7) {
       newBuilding = ResourceStorageBuilding::create(
-          "Elixir_Storage_01.png", "圣水瓶", CampType::PLAYER, 1, 3, 400, 50,
-          100, 5.0f, ResourceType::GOLD, 1000, 0.5f);
+            "Elixir_Storage_01.png", "圣水瓶", CampType::PLAYER, 1, 3,
+            400, 50, 100, 5.0f, ResourceType::GOLD, 1000, 0.5f);
       pdm->setElixirLimit();
     }
     if (newBuilding) {
