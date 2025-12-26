@@ -4,10 +4,10 @@
 
 #include "PlayerDataManager.h"
 
+#include "BuildingEnums.h"
 #include "BuildingManager.h"
 #include "ResourceBuilding.h"
-#include"ResourceStorageBuilding.h"
-#include "BuildingEnums.h"
+#include "ResourceStorageBuilding.h"
 
 // 使用别名进行缩写，请勿在.h文件中使用
 using PDM = PlayerDataManager;
@@ -134,9 +134,9 @@ void PDM::setBuilderLimit() {
   auto buildings = BuildingManager::getInstance()->getAllBuildings();
   for (auto building : buildings) {
     if (building->getType() == BuildingType::STORAGE) {
-      auto storage = dynamic_cast<ResourceBuilding*>(building);
+      auto storage = dynamic_cast<ResourceStorageBuilding*>(building);
       if (storage->getResType() == ResourceType::BUILDER)
-        builder_limit_ += storage->getMaxCapacity();
+        builder_limit_ += storage->getMaxStorageCapacity();
     }
   }
 
@@ -203,14 +203,12 @@ void PDM::syncBuildingToLocal() {
           static_cast<int>(ResourceType::NORESOURCE));
     }
     if (buildingDatas_[i].buildingType == BuildingType::DEFENSE) {
-        userDefault_->setIntegerForKey(
-            (prefix + "targetType").c_str(),
-            static_cast<int>(buildingDatas_[i].targetType));
-    }
-    else {
-        userDefault_->setIntegerForKey(
-            (prefix + "targetType").c_str(),
-            static_cast<int>(TargetType::NONE));
+      userDefault_->setIntegerForKey(
+          (prefix + "targetType").c_str(),
+          static_cast<int>(buildingDatas_[i].targetType));
+    } else {
+      userDefault_->setIntegerForKey((prefix + "targetType").c_str(),
+                                     static_cast<int>(TargetType::NONE));
     }
 
     userDefault_->setFloatForKey((prefix + "x").c_str(),

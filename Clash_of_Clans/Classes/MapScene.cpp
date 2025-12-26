@@ -8,6 +8,7 @@
 #include "ResourceBuilding.h"
 #include "ResourceStorageBuilding.h"
 #include "StartScene.h"
+#include "UpgradeManager.h"
 #include "cocos2d.h"
 #include "ui/CocosGUI.h"
 
@@ -388,9 +389,28 @@ void MapScene::createPlacementMenu() {
   firecrackersBtn->setPosition(Vec2(60, startY - 580));
   firecrackersBtn->setScale(0.8f);
   firecrackersBtn->addClickEventListener([this](Ref* sender) {
-      onBuildingButtonClicked(sender, 8);  // 8代表防空火箭
-      });
+    onBuildingButtonClicked(sender, 8);  // 8代表防空火箭
+  });
   menuPanel->addChild(firecrackersBtn);
+
+  // 升级选项
+  auto upgradeBtn = ui::Button::create("upgrade_icon.png");
+  upgradeBtn->setPosition(Vec2(60, startY - 580));
+  upgradeBtn->setScale(0.8f);
+
+  upgradeBtn->addClickEventListener([this](Ref* sender) {
+    _isUpgradeMode = !_isUpgradeMode;  // 切换状态
+    // 视觉反馈：开启时变色，关闭时恢复
+    if (_isUpgradeMode) {
+      ((ui::Button*)sender)->setColor(Color3B::YELLOW);
+      CCLOG("升级模式：开启（请点击地图上的建筑进行升级）");
+    } else {
+      ((ui::Button*)sender)->setColor(Color3B::WHITE);
+      CCLOG("升级模式：关闭");
+    }
+  });
+
+  menuPanel->addChild(upgradeBtn);  //
 
   // 士兵按钮1 - 野蛮人
   auto barbarianBtn = ui::Button::create("rarbarian_icon.png");
@@ -463,6 +483,20 @@ void MapScene::onSoldierButtonClicked(Ref* sender, int soldierType) {
 // 触摸开始事件 - 放置建筑或士兵
 bool MapScene::onTouchBegan(Touch* touch, Event* event) {
   // 交给PlacementManager处理开始触摸
+  if (_isUpgradeMode) {
+    Vec2 touchPos = touch->getLocation();
+    // 遍历所有建筑，检查点击位置是否在建筑范围内
+    auto buildings = BuildingManager::getInstance()->getAllBuildings();
+    for (auto building : buildings) {
+      if (building->getBoundingBox().containsPoint(touchPos)) {
+        if (UpgradeManager::getInstance()->tryUpgradeBuilding(building)) {
+          _isUpgradeMode = false;   // 升级完成后退出模式
+          updateResourceDisplay();  // 更新 UI 资源条
+        }
+        return true;
+      }
+    }
+  }
   return true;
 }
 
@@ -565,63 +599,64 @@ void MapScene::loadSavedBuildings() {
     // 根据建筑类型创建对应的建筑
 
     if (data.buildingType == BuildingType::RESOURCE) {
-        if (data.resourceType == ResourceType::GOLD) {
-            building = ResourceBuilding::create(
-                "gold_mine_icon_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
-                100 * data.level, 60, 100 * data.level, 5.0f, ResourceType::GOLD,
-                10 * data.level, 50 * data.level);
-        }
-        else if (data.resourceType == ResourceType::ELIXIR){
-            building = ResourceBuilding::create(
-                "elixir_collector_icon_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
-                100 * data.level, 60, 100 * data.level, 5.0f, ResourceType::ELIXIR,
-                10 * data.level, 50 * data.level);
-        }
-        else {
-            building = ResourceBuilding::create(
-                "base_camp_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
-                100 * data.level, 60, 100 * data.level, 5.0f, ResourceType::BUILDER,
-                0, 2 + data.level);
-        }
+      if (data.resourceType == ResourceType::GOLD) {
+        building = ResourceBuilding::create(
+            "gold_mine_icon_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 100 * data.level, 60,
+            100 * data.level, 5.0f, ResourceType::GOLD, 10 * data.level,
+            50 * data.level);
+      } else if (data.resourceType == ResourceType::ELIXIR) {
+        building = ResourceBuilding::create(
+            "elixir_collector_icon_0" + std::to_string(data.level) + ".png",
+            data.name, CampType::PLAYER, data.level, 3, 100 * data.level, 60,
+            100 * data.level, 5.0f, ResourceType::ELIXIR, 10 * data.level,
+            50 * data.level);
+      } else {
+        building = ResourceBuilding::create(
+            "base_camp_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 100 * data.level, 60,
+            100 * data.level, 5.0f, ResourceType::BUILDER, 0, 2 + data.level);
+      }
     } else if (data.buildingType == BuildingType::DEFENSE) {
-        if (data.targetType == TargetType::AIR_ONLY) {
-            building = DefenseBuilding::create(
-                "firecrackers_0"+ std::to_string(data.level) +".png", data.name, CampType::PLAYER, data.level, 3,
-                200 * data.level, 50, 150 * data.level, 8.0f, 10 * data.level, 200,
-                AttackType::SINGLE_TARGET, 2.0f, TargetType::AIR_ONLY);
-        }
-        else if (data.targetType == TargetType::GROUND_ONLY){
-            building = DefenseBuilding::create(
-                "cannon_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
-                200 * data.level, 50, 150 * data.level, 8.0f, 10 * data.level, 220,
-                AttackType::SINGLE_TARGET, 2.0f, TargetType::GROUND_ONLY);
-        }
-        else {
-            building = DefenseBuilding::create(
-                "tower_icon_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
-                200 * data.level, 50, 150 * data.level, 8.0f, 10 * data.level, 200,
-                AttackType::SINGLE_TARGET, 2.0f);
-        }
-     
+      if (data.targetType == TargetType::AIR_ONLY) {
+        building = DefenseBuilding::create(
+            "firecrackers_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 200 * data.level, 50,
+            150 * data.level, 8.0f, 10 * data.level, 200,
+            AttackType::SINGLE_TARGET, 2.0f, TargetType::AIR_ONLY);
+      } else if (data.targetType == TargetType::GROUND_ONLY) {
+        building = DefenseBuilding::create(
+            "cannon_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 200 * data.level, 50,
+            150 * data.level, 8.0f, 10 * data.level, 220,
+            AttackType::SINGLE_TARGET, 2.0f, TargetType::GROUND_ONLY);
+      } else {
+        building = DefenseBuilding::create(
+            "tower_icon_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 200 * data.level, 50,
+            150 * data.level, 8.0f, 10 * data.level, 200,
+            AttackType::SINGLE_TARGET, 2.0f);
+      }
+
     } else if (data.buildingType == BuildingType::STORAGE) {
-        if (data.resourceType == ResourceType::GOLD) {
-            building = ResourceStorageBuilding::create(
-                "Gold_Storage_01.png", data.name, CampType::PLAYER, data.level, 3,
-                400 * data.level, 50, 100 * data.level, 5.0f, ResourceType::GOLD,
-                1000 * data.level, 0.5f);
-        }
-        else if (data.resourceType == ResourceType::ELIXIR) {
-            building = ResourceStorageBuilding::create(
-                "Elixir_Storage_01.png", data.name, CampType::PLAYER, data.level, 3,
-                400 * data.level, 50, 100 * data.level, 5.0f, ResourceType::ELIXIR,
-                1000 * data.level, 0.5f);
-        }
-        else {
-            building = ResourceStorageBuilding::create(
-                "base_camp_01.png", data.name, CampType::PLAYER, data.level, 3,
-                200 * data.level, 50, 150 * data.level, 8.0f,
-                ResourceType::BUILDER, 2 + data.level, 0);
-        }
+      if (data.resourceType == ResourceType::GOLD) {
+        building = ResourceStorageBuilding::create(
+            "Gold_Storage_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 400 * data.level, 50,
+            100 * data.level, 5.0f, ResourceType::GOLD, 1000 * data.level,
+            0.5f);
+      } else if (data.resourceType == ResourceType::ELIXIR) {
+        building = ResourceStorageBuilding::create(
+            "Elixir_Storage_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 400 * data.level, 50,
+            100 * data.level, 5.0f, ResourceType::ELIXIR, 1000 * data.level,
+            0.5f);
+      } else {
+        building = ResourceStorageBuilding::create(
+            "base_camp_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 200 * data.level, 50,
+            150 * data.level, 8.0f, ResourceType::BUILDER, 2 + data.level, 0);
+      }
     }
     if (building) {
       building->setPosition(Vec2(data.positionX, data.positionY));
@@ -629,6 +664,9 @@ void MapScene::loadSavedBuildings() {
       building->showHpBar(true);  // 加载建筑时也显示血条
     }
   }
+  playerData->setGoldLimit();
+  playerData->setElixirLimit();
+  playerData->setBuilderLimit();
 }
 
 // 在指定位置生成士兵

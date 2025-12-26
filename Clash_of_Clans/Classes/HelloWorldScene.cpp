@@ -4,13 +4,11 @@
 #endif
 
 #include "HelloWorldScene.h"
+
 #include "PlayerDataManager.h"
 USING_NS_CC;
 
-
-
 Scene* HelloWorld::createScene() { return HelloWorld::create(); }
-
 
 // on "init" you need to initialize your instance
 bool HelloWorld::init() {
