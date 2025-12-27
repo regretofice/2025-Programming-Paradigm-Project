@@ -82,8 +82,16 @@ void PDM::setGoldGrowthRate(int rate) {
     rate = 1;
   }
   gold_growth_rate = rate;
+  auto buildings = BuildingManager::getInstance()->getAllBuildings();
+  for (auto building : buildings) {
+    if (building->getType() == BuildingType::RESOURCE) {
+      auto storage = dynamic_cast<ResourceBuilding*>(building);
+      if (storage->getResType() == ResourceType::GOLD)
+        gold_growth_rate += storage->getMaxCapacity();
+    }
+  }
   syncGoldGrowRateToLocal();
-  CCLOG("金币增长速率已更新为：%d", rate);
+  CCLOG("金币增长速率已更新为：%d", gold_growth_rate);
 }
 
 void PDM::setElixir(int elixir) {
@@ -117,8 +125,16 @@ void PDM::setElixirGrowthRate(int rate) {
     rate = 1;
   }
   elixir_growth_rate = rate;
-
-  CCLOG("圣水增长速率已更新为：%d", rate);
+  auto buildings = BuildingManager::getInstance()->getAllBuildings();
+  for (auto building : buildings) {
+    if (building->getType() == BuildingType::RESOURCE) {
+      auto storage = dynamic_cast<ResourceBuilding*>(building);
+      if (storage->getResType() == ResourceType::ELIXIR)
+        elixir_growth_rate += storage->getMaxCapacity();
+    }
+  }
+  syncElixirGrowRateToLocal();
+  CCLOG("圣水增长速率已更新为：%d", elixir_growth_rate);
 }
 void PDM::setBuilder(int builder) {
   if (builder < 0) {
@@ -148,8 +164,17 @@ void PDM::setBuilderGrowthRate(int rate) {
     rate = 1;
   }
   builder_growth_rate = rate;
+  auto buildings = BuildingManager::getInstance()->getAllBuildings();
+  for (auto building : buildings) {
+    if (building->getType() == BuildingType::RESOURCE) {
+      auto storage = dynamic_cast<ResourceBuilding*>(building);
+      if (storage->getResType() == ResourceType::BUILDER)
+        builder_growth_rate += storage->getMaxCapacity();
+    }
+  }
+  builder_growth_rate = rate;
   syncBuilderGrowRateToLocal();
-  CCLOG("建筑工人增长速率已更新为：%d", rate);
+  CCLOG("建筑工人增长速率已更新为：%d", builder_growth_rate);
 }
 // 每次更新完数据之后要调用flush来保存数据，否则会丢失
 void PDM::syncGoldToLocal() {
