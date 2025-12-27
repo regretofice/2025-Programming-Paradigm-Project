@@ -68,6 +68,8 @@ class PlayerDataManager : public cocos2d::Ref {
   // 设置建筑工人回复速率
   void setBuilderGrowthRate(int rate);
 
+  void updateAllLimits();
+
   /////////////////////////////
   //   建筑存档相关接口
   void addBuildingData(const BuildingData& data);

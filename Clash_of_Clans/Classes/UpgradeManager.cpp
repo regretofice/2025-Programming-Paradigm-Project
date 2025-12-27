@@ -61,12 +61,16 @@ bool UpgradeManager::tryUpgradeBuilding(Building* building) {
   auto pdm = PlayerDataManager::getInstance();
 
   if (pdm->getGold() >= cost) {
+    if (!building->setLevel(building->getLevel() + 1)) {
+      CCLOG("无法升为当前等级");
+      return false;
+    }
     // 1. 扣除资源
     pdm->setGold(pdm->getGold() - cost);
 
     // 2. 提升等级与属性
     // 主属性
-    building->setLevel(building->getLevel() + 1);
+
     building->setMaxHp(building->getMaxHp() + 100);
     building->setHp(building->getMaxHp());  // 升级后血量回满
     // 副属性
