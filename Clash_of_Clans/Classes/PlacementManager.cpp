@@ -161,7 +161,7 @@ void PlacementManager::createPreviewSprite(int buildingType, int soldierType,
     else if (buildingType == 7)
       texPath = "Elixir_Storage_01.png";
     else if (buildingType == 8)
-        texPath = "firecrackers_01.png";
+      texPath = "firecrackers_01.png";
   } else if (_currentType == PlacementType::SOLDIER) {
     if (soldierType == 1)
       texPath = "rarbarian_icon.png";
@@ -268,8 +268,8 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
   if (_currentType == PlacementType::BUILDING) {
     Building* newBuilding = nullptr;
     if (pdm->getGold() < 500) {
-        CCLOG("金币不足，无法放置!");
-        return false;
+      CCLOG("金币不足，无法放置!");
+      return false;
     }
     pdm->setGold(pdm->getGold() - 500);
     if (_currentId == 1) {
@@ -306,8 +306,9 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
       pdm->setElixirLimit();
     } else if (_currentId == 8) {
       newBuilding = DefenseBuilding::create(
-            "firecrackers_01.png", "防空火箭", CampType::PLAYER, 1, 3, 200, 50, 800, 8.0f,
-            10, 200, AttackType::SINGLE_TARGET, 2.0f, TargetType::AIR_ONLY);
+          "firecrackers_01.png", "防空火箭", CampType::PLAYER, 1, 3, 200, 50,
+          800, 8.0f, 10, 200, AttackType::SINGLE_TARGET, 2.0f,
+          TargetType::AIR_ONLY);
     }
     if (newBuilding) {
       CCLOG("addChild building");
@@ -334,8 +335,8 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
     CCLOG(">>> Try place soldier, type=%d", _currentId);
     Soldier* soldier = nullptr;
     if (pdm->getElixir() < 400) {
-        CCLOG("圣水不足，无法放置!");
-        return false;
+      CCLOG("圣水不足，无法放置!");
+      return false;
     }
     pdm->setElixir(pdm->getElixir() - 400);
     if (_currentId == 1) {
@@ -394,6 +395,12 @@ void PlacementManager::clearAll() {
   // 1. 清空士兵和建筑的指针列表
   // 注意：这里不需要手动 delete 士兵/建筑，因为它们作为场景节点
   // 会在 replaceScene 时由 Cocos2d-x 的引用计数机制自动销毁。
+  for (auto soldier : activeSoldiers) {
+    if (soldier) {
+      soldier->unscheduleUpdate();  // 停止 update 中的寻路尝试
+      soldier->stopAllActions();    // 停止正在进行的移动 Action
+    }
+  }
   activeSoldiers.clear();
   // 2. 重置放置状态
   _currentType = PlacementType::NONE;
