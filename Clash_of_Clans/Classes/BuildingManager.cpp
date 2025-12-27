@@ -111,12 +111,8 @@ std::vector<Building*> BuildingManager::getBuildingsInRange(const Vec2& pos,
 }
 
 void BuildingManager::clearAllBuildings() {
-  for (auto building : _buildings) {
-    if (building) {
-      building->removeFromParent();
-      delete building;
-    }
-  }
+  // 仅仅清空列表即可，因为建筑作为 MapScene 的子节点，
+  // 在场景切换时会被 Cocos2dx 引擎自动销毁。
   _buildings.clear();
 }
 

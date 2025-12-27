@@ -8,13 +8,13 @@
 #include "ResourceBuilding.h"
 #include "ResourceStorageBuilding.h"
 #include "StartScene.h"
+#include "UpgradeManager.h"
 #include "cocos2d.h"
 #include "ui/CocosGUI.h"
 
 USING_NS_CC;
 
 Scene* MapScene::createScene() {
-  // 默认使用UserDefault中保存的地图，如果没有则使用map2.tmx
   auto userDefault = UserDefault::getInstance();
   std::string mapFile =
       userDefault->getStringForKey("selected_map", "map2.tmx");
@@ -116,9 +116,10 @@ bool MapScene::init() {
         if (type == ui::Widget::TouchEventType::ENDED) {
           // 离开场景时停止背景音乐
           AudioManager::getInstance()->stopBackgroundMusic();
-          Scene::onExit();
-          // 保存建筑位置
           saveBuildingsPosition();
+          Scene::onExit();
+          PlacementManager::getInstance()->clearAll();
+          BuildingManager::destroyInstance();
           menuReturnCallback(sender);
         }
       });
@@ -226,66 +227,115 @@ void MapScene::createResourceBars() {
   _elixirLabel->enableOutline(Color4B::BLACK, 1);
   resourcePanel->addChild(_elixirLabel);
 
+  // ========== 建筑工人显示 ==========
+  // 建筑工人图标（放在金币和圣水之间）
+  auto builderIconDraw = DrawNode::create();
+  // 绘制建筑工人图标：橙色锤子形状
+  builderIconDraw->drawSolidCircle(
+      Vec2(0, 0), 15, 0, 16, 1, 1,
+      Color4F(1.0f, 0.65f, 0.0f, 1.0f));  // 橙色圆形
+
+  // 绘制锤子形状
+  // 锤子头
+  builderIconDraw->drawSolidRect(Vec2(-10, -5), Vec2(10, 5), Color4F(0.3f, 0.3f, 0.3f, 1.0f));
+  // 锤子柄
+  builderIconDraw->drawSolidRect(Vec2(-3, -10), Vec2(3, 10), Color4F(0.5f, 0.3f, 0.1f, 1.0f));
+
+  builderIconDraw->setPosition(Vec2(visibleSize.width / 2 - 150, 30));
+  resourcePanel->addChild(builderIconDraw);
+  _builderIcon = builderIconDraw;
+
+  // 建筑工人进度条背景
+  auto builderBarBackground = DrawNode::create();
+  builderBarBackground->drawSolidRect(
+      Vec2(0, 0), Vec2(200, 20),
+      Color4F(0.2f, 0.2f, 0.2f, 1.0f));  // 深灰色背景
+  builderBarBackground->setPosition(Vec2(visibleSize.width / 2 - 100, 20));
+  resourcePanel->addChild(builderBarBackground);
+
+  // 建筑工人进度条前景
+  _builderBarForeground = DrawNode::create();
+  _builderBarForeground->drawSolidRect(
+      Vec2(0, 0), Vec2(200, 20),
+      Color4F(1.0f, 0.65f, 0.0f, 1.0f));  // 橙色前景
+  _builderBarForeground->setPosition(Vec2(visibleSize.width / 2 - 100, 20));
+  resourcePanel->addChild(_builderBarForeground);
+
+  // 建筑工人标签
+  _builderLabel = Label::createWithTTF("0/0", "fonts/arial.ttf", 16);
+  _builderLabel->setPosition(Vec2(visibleSize.width / 2 , 30));
+  _builderLabel->setColor(Color3B::WHITE);
+  _builderLabel->enableOutline(Color4B::BLACK, 1);
+  resourcePanel->addChild(_builderLabel);
   // 初始化资源显示
   updateResourceDisplay();
 }
 
 // 更新资源显示
-void MapScene::updateResourceDisplay() {
-  auto playerData = PlayerDataManager::getInstance();
+void MapScene::updateResourceDisplay() 
+{
+    auto playerData = PlayerDataManager::getInstance();
 
-  // 获取当前资源
-  int currentGold = playerData->getGold();
-  int maxGold = playerData->getGoldLimit();
-  int currentElixir = playerData->getElixir();
-  int maxElixir = playerData->getElixirLimit();
+    // 获取当前资源
+    int currentGold = playerData->getGold();
+    int maxGold = playerData->getGoldLimit();
+    int currentElixir = playerData->getElixir();
+    int maxElixir = playerData->getElixirLimit();
+    int currentBuilder = playerData->getBuilder();
+    int maxBuilder = playerData->getBuilderLimit();
 
-  // 计算百分比
-  float goldPercent = maxGold > 0 ? (currentGold * 100.0f / maxGold) : 0;
-  float elixirPercent =
-      maxElixir > 0 ? (currentElixir * 100.0f / maxElixir) : 0;
+    // 计算百分比
+    float goldPercent = maxGold > 0 ? (currentGold * 100.0f / maxGold) : 0;
+    float elixirPercent = maxElixir > 0 ? (currentElixir * 100.0f / maxElixir) : 0;
+    float builderPercent = maxBuilder > 0 ? (currentBuilder * 100.0f / maxBuilder) : 0;
 
-  // 限制百分比在0-100之间
-  goldPercent = std::max(0.0f, std::min(100.0f, goldPercent));
-  elixirPercent = std::max(0.0f, std::min(100.0f, elixirPercent));
+    // 限制百分比在0-100之间
+    goldPercent = std::max(0.0f, std::min(100.0f, goldPercent));
+    elixirPercent = std::max(0.0f, std::min(100.0f, elixirPercent));
+    builderPercent = std::max(0.0f, std::min(100.0f, builderPercent));
 
-  // 更新进度条 - 清除旧的绘制并绘制新的
-  _goldBarForeground->clear();
-  _elixirBarForeground->clear();
+    // 更新进度条 - 清除旧的绘制并绘制新的
+    _goldBarForeground->clear();
+    _elixirBarForeground->clear();
+    _builderBarForeground->clear();
 
-  // 绘制新的进度条前景
-  float goldBarWidth = 200 * (goldPercent / 100.0f);
-  float elixirBarWidth = 200 * (elixirPercent / 100.0f);
+    // 绘制新的进度条前景
+    float goldBarWidth = 200 * (goldPercent / 100.0f);
+    float elixirBarWidth = 200 * (elixirPercent / 100.0f);
+    float builderBarWidth = 200 * (builderPercent / 100.0f);
 
-  _goldBarForeground->drawSolidRect(Vec2(0, 0), Vec2(goldBarWidth, 20),
-                                    Color4F(1.0f, 0.84f, 0.0f, 1.0f));
-  _elixirBarForeground->drawSolidRect(Vec2(0, 0), Vec2(elixirBarWidth, 20),
-                                      Color4F(0.58f, 0.0f, 0.83f, 1.0f));
+    _goldBarForeground->drawSolidRect(Vec2(0, 0), Vec2(goldBarWidth, 20),
+        Color4F(1.0f, 0.84f, 0.0f, 1.0f));
+    _elixirBarForeground->drawSolidRect(Vec2(0, 0), Vec2(elixirBarWidth, 20),
+        Color4F(0.58f, 0.0f, 0.83f, 1.0f));
+    _builderBarForeground->drawSolidRect(Vec2(0, 0), Vec2(builderBarWidth, 20),
+        Color4F(1.0f, 0.65f, 0.0f, 1.0f));
 
-  // 更新标签文本
-  std::string goldText = StringUtils::format("%d/%d", currentGold, maxGold);
-  std::string elixirText =
-      StringUtils::format("%d/%d", currentElixir, maxElixir);
+    // 更新标签文本
+    std::string goldText = StringUtils::format("%d/%d", currentGold, maxGold);
+    std::string elixirText = StringUtils::format("%d/%d", currentElixir, maxElixir);
+    std::string builderText = StringUtils::format("%d/%d", currentBuilder, maxBuilder);
 
-  _goldLabel->setString(goldText);
-  _elixirLabel->setString(elixirText);
+    _goldLabel->setString(goldText);
+    _elixirLabel->setString(elixirText);
+    _builderLabel->setString(builderText);
 
-  // 根据资源量改变标签颜色
-  if (currentGold < maxGold * 0.2f) {
-    _goldLabel->setColor(Color3B::RED);
-  } else if (currentGold < maxGold * 0.5f) {
-    _goldLabel->setColor(Color3B::YELLOW);
-  } else {
-    _goldLabel->setColor(Color3B::GREEN);
-  }
+    // 根据资源量改变标签颜色
+    auto updateLabelColor = [](Label* label, int current, int max) {
+        if (current < max * 0.2f) {
+            label->setColor(Color3B::RED);
+        }
+        else if (current < max * 0.5f) {
+            label->setColor(Color3B::YELLOW);
+        }
+        else {
+            label->setColor(Color3B::GREEN);
+        }
+        };
 
-  if (currentElixir < maxElixir * 0.2f) {
-    _elixirLabel->setColor(Color3B::RED);
-  } else if (currentElixir < maxElixir * 0.5f) {
-    _elixirLabel->setColor(Color3B::YELLOW);
-  } else {
-    _elixirLabel->setColor(Color3B::GREEN);
-  }
+    updateLabelColor(_goldLabel, currentGold, maxGold);
+    updateLabelColor(_elixirLabel, currentElixir, maxElixir);
+    updateLabelColor(_builderLabel, currentBuilder, maxBuilder);
 }
 
 // 更新函数
@@ -388,9 +438,26 @@ void MapScene::createPlacementMenu() {
   firecrackersBtn->setPosition(Vec2(60, startY - 580));
   firecrackersBtn->setScale(0.8f);
   firecrackersBtn->addClickEventListener([this](Ref* sender) {
-      onBuildingButtonClicked(sender, 8);  // 8代表防空火箭
-      });
+    onBuildingButtonClicked(sender, 8);  // 8代表防空火箭
+  });
   menuPanel->addChild(firecrackersBtn);
+
+  // 升级选项
+  auto upgradeBtn = ui::Button::create("upgrade_icon.png");
+  upgradeBtn->setPosition(Vec2(60, startY - 580));
+  upgradeBtn->setScale(0.8f);
+
+  upgradeBtn->addClickEventListener([this](Ref* sender) {
+    _isUpgradeMode = !_isUpgradeMode;  // 切换状态
+    // 视觉反馈：开启时变色，关闭时恢复
+    if (_isUpgradeMode) {
+      CCLOG("升级模式：开启（请点击地图上的建筑进行升级）");
+    } else {
+      CCLOG("升级模式：关闭");
+    }
+  });
+
+  menuPanel->addChild(upgradeBtn);  //
 
   // 士兵按钮1 - 野蛮人
   auto barbarianBtn = ui::Button::create("rarbarian_icon.png");
@@ -463,6 +530,20 @@ void MapScene::onSoldierButtonClicked(Ref* sender, int soldierType) {
 // 触摸开始事件 - 放置建筑或士兵
 bool MapScene::onTouchBegan(Touch* touch, Event* event) {
   // 交给PlacementManager处理开始触摸
+  if (_isUpgradeMode) {
+    Vec2 touchPos = touch->getLocation();
+    // 遍历所有建筑，检查点击位置是否在建筑范围内
+    auto buildings = BuildingManager::getInstance()->getAllBuildings();
+    for (auto building : buildings) {
+      if (building->getBoundingBox().containsPoint(touchPos)) {
+        if (UpgradeManager::getInstance()->tryUpgradeBuilding(building)) {
+          _isUpgradeMode = false;   // 升级完成后退出模式
+          updateResourceDisplay();  // 更新 UI 资源条
+        }
+        return true;
+      }
+    }
+  }
   return true;
 }
 
@@ -565,63 +646,64 @@ void MapScene::loadSavedBuildings() {
     // 根据建筑类型创建对应的建筑
 
     if (data.buildingType == BuildingType::RESOURCE) {
-        if (data.resourceType == ResourceType::GOLD) {
-            building = ResourceBuilding::create(
-                "gold_mine_icon_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
-                100 * data.level, 60, 100 * data.level, 5.0f, ResourceType::GOLD,
-                10 * data.level, 50 * data.level);
-        }
-        else if (data.resourceType == ResourceType::ELIXIR){
-            building = ResourceBuilding::create(
-                "elixir_collector_icon_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
-                100 * data.level, 60, 100 * data.level, 5.0f, ResourceType::ELIXIR,
-                10 * data.level, 50 * data.level);
-        }
-        else {
-            building = ResourceBuilding::create(
-                "base_camp_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
-                100 * data.level, 60, 100 * data.level, 5.0f, ResourceType::BUILDER,
-                0, 2 + data.level);
-        }
+      if (data.resourceType == ResourceType::GOLD) {
+        building = ResourceBuilding::create(
+            "gold_mine_icon_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 100 * data.level, 60,
+            100 * data.level, 5.0f, ResourceType::GOLD, 10 * data.level,
+            50 * data.level);
+      } else if (data.resourceType == ResourceType::ELIXIR) {
+        building = ResourceBuilding::create(
+            "elixir_collector_icon_0" + std::to_string(data.level) + ".png",
+            data.name, CampType::PLAYER, data.level, 3, 100 * data.level, 60,
+            100 * data.level, 5.0f, ResourceType::ELIXIR, 10 * data.level,
+            50 * data.level);
+      } else {
+        building = ResourceBuilding::create(
+            "base_camp_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 100 * data.level, 60,
+            100 * data.level, 5.0f, ResourceType::BUILDER, 0, 2 + data.level);
+      }
     } else if (data.buildingType == BuildingType::DEFENSE) {
-        if (data.targetType == TargetType::AIR_ONLY) {
-            building = DefenseBuilding::create(
-                "firecrackers_0"+ std::to_string(data.level) +".png", data.name, CampType::PLAYER, data.level, 3,
-                200 * data.level, 50, 150 * data.level, 8.0f, 10 * data.level, 200,
-                AttackType::SINGLE_TARGET, 2.0f, TargetType::AIR_ONLY);
-        }
-        else if (data.targetType == TargetType::GROUND_ONLY){
-            building = DefenseBuilding::create(
-                "cannon_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
-                200 * data.level, 50, 150 * data.level, 8.0f, 10 * data.level, 220,
-                AttackType::SINGLE_TARGET, 2.0f, TargetType::GROUND_ONLY);
-        }
-        else {
-            building = DefenseBuilding::create(
-                "tower_icon_0" + std::to_string(data.level) + ".png", data.name, CampType::PLAYER, data.level, 3,
-                200 * data.level, 50, 150 * data.level, 8.0f, 10 * data.level, 200,
-                AttackType::SINGLE_TARGET, 2.0f);
-        }
-     
+      if (data.targetType == TargetType::AIR_ONLY) {
+        building = DefenseBuilding::create(
+            "firecrackers_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 200 * data.level, 50,
+            150 * data.level, 8.0f, 10 * data.level, 200,
+            AttackType::SINGLE_TARGET, 2.0f, TargetType::AIR_ONLY);
+      } else if (data.targetType == TargetType::GROUND_ONLY) {
+        building = DefenseBuilding::create(
+            "cannon_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 200 * data.level, 50,
+            150 * data.level, 8.0f, 10 * data.level, 220,
+            AttackType::SINGLE_TARGET, 2.0f, TargetType::GROUND_ONLY);
+      } else {
+        building = DefenseBuilding::create(
+            "tower_icon_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 200 * data.level, 50,
+            150 * data.level, 8.0f, 10 * data.level, 200,
+            AttackType::SINGLE_TARGET, 2.0f);
+      }
+
     } else if (data.buildingType == BuildingType::STORAGE) {
-        if (data.resourceType == ResourceType::GOLD) {
-            building = ResourceStorageBuilding::create(
-                "Gold_Storage_01.png", data.name, CampType::PLAYER, data.level, 3,
-                400 * data.level, 50, 100 * data.level, 5.0f, ResourceType::GOLD,
-                1000 * data.level, 0.5f);
-        }
-        else if (data.resourceType == ResourceType::ELIXIR) {
-            building = ResourceStorageBuilding::create(
-                "Elixir_Storage_01.png", data.name, CampType::PLAYER, data.level, 3,
-                400 * data.level, 50, 100 * data.level, 5.0f, ResourceType::ELIXIR,
-                1000 * data.level, 0.5f);
-        }
-        else {
-            building = ResourceStorageBuilding::create(
-                "base_camp_01.png", data.name, CampType::PLAYER, data.level, 3,
-                200 * data.level, 50, 150 * data.level, 8.0f,
-                ResourceType::BUILDER, 2 + data.level, 0);
-        }
+      if (data.resourceType == ResourceType::GOLD) {
+        building = ResourceStorageBuilding::create(
+            "Gold_Storage_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 400 * data.level, 50,
+            100 * data.level, 5.0f, ResourceType::GOLD, 1000 * data.level,
+            0.5f);
+      } else if (data.resourceType == ResourceType::ELIXIR) {
+        building = ResourceStorageBuilding::create(
+            "Elixir_Storage_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 400 * data.level, 50,
+            100 * data.level, 5.0f, ResourceType::ELIXIR, 1000 * data.level,
+            0.5f);
+      } else {
+        building = ResourceStorageBuilding::create(
+            "base_camp_0" + std::to_string(data.level) + ".png", data.name,
+            CampType::PLAYER, data.level, 3, 200 * data.level, 50,
+            150 * data.level, 8.0f, ResourceType::BUILDER, 2 + data.level, 0);
+      }
     }
     if (building) {
       building->setPosition(Vec2(data.positionX, data.positionY));
@@ -629,6 +711,9 @@ void MapScene::loadSavedBuildings() {
       building->showHpBar(true);  // 加载建筑时也显示血条
     }
   }
+  playerData->setGoldLimit();
+  playerData->setElixirLimit();
+  playerData->setBuilderLimit();
 }
 
 // 在指定位置生成士兵

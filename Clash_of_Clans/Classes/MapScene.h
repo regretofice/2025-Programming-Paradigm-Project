@@ -2,9 +2,9 @@
 #ifndef __MAP_SCENE_H__
 #define __MAP_SCENE_H__
 
+#include "AudioManager.h"
 #include "Soldier.h"
 #include "cocos2d.h"
-#include "AudioManager.h"
 class MapScene : public cocos2d::Scene {
 public:
 	static cocos2d::Scene* createScene();
@@ -35,11 +35,10 @@ public:
 	virtual void onEnter() override;
 	// 添加资源显示相关函数
 	void updateResourceDisplay();
-	
 
 private:
 	cocos2d::TMXTiledMap* _tileMap;
-	std::string _mapFileName; // 存储地图文件名
+	std::string _mapFileName;  // 存储地图文件名
 	int _mapWidth;
 	int _mapHeight;
 	int _tileSize;
@@ -52,14 +51,18 @@ private:
 	int _currentTypeId;                 // 具体类型ID
 	bool _isPlacing;                    // 是否正在放置状态
 	bool isPlacingSoldier;              // 是否处于放置士兵模式
+	bool _isUpgradeMode = false;        // 是否处于升级模式
 	SoldierType currentSoldierType;     // 当前要放置的士兵类型
 
 	// 添加资源显示相关成员变量
 	cocos2d::Label* _goldLabel;
 	cocos2d::Label* _elixirLabel;
+	cocos2d::Label* _builderLabel;  // 建筑工人标签
 	cocos2d::DrawNode* _goldIcon;
 	cocos2d::DrawNode* _elixirIcon;
+	cocos2d::DrawNode* _builderIcon;  // 建筑工人图标
 	cocos2d::DrawNode* _goldBarForeground;
 	cocos2d::DrawNode* _elixirBarForeground;
-};
+	cocos2d::DrawNode* _builderBarForeground;  // 建筑工人进度条前景
+}; 
 #endif  // __MAP_SCENE_H__

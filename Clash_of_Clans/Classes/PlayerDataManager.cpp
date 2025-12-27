@@ -4,10 +4,11 @@
 
 #include "PlayerDataManager.h"
 
-#include "BuildingManager.h"
-#include "ResourceBuilding.h"
-#include"ResourceStorageBuilding.h"
 #include "BuildingEnums.h"
+#include "BuildingManager.h"
+#include "MapScene.h"
+#include "ResourceBuilding.h"
+#include "ResourceStorageBuilding.h"
 
 // 使用别名进行缩写，请勿在.h文件中使用
 using PDM = PlayerDataManager;
@@ -134,9 +135,9 @@ void PDM::setBuilderLimit() {
   auto buildings = BuildingManager::getInstance()->getAllBuildings();
   for (auto building : buildings) {
     if (building->getType() == BuildingType::STORAGE) {
-      auto storage = dynamic_cast<ResourceBuilding*>(building);
+      auto storage = dynamic_cast<ResourceStorageBuilding*>(building);
       if (storage->getResType() == ResourceType::BUILDER)
-        builder_limit_ += storage->getMaxCapacity();
+        builder_limit_ += storage->getMaxStorageCapacity();
     }
   }
 
@@ -203,14 +204,12 @@ void PDM::syncBuildingToLocal() {
           static_cast<int>(ResourceType::NORESOURCE));
     }
     if (buildingDatas_[i].buildingType == BuildingType::DEFENSE) {
-        userDefault_->setIntegerForKey(
-            (prefix + "targetType").c_str(),
-            static_cast<int>(buildingDatas_[i].targetType));
-    }
-    else {
-        userDefault_->setIntegerForKey(
-            (prefix + "targetType").c_str(),
-            static_cast<int>(TargetType::NONE));
+      userDefault_->setIntegerForKey(
+          (prefix + "targetType").c_str(),
+          static_cast<int>(buildingDatas_[i].targetType));
+    } else {
+      userDefault_->setIntegerForKey((prefix + "targetType").c_str(),
+                                     static_cast<int>(TargetType::NONE));
     }
 
     userDefault_->setFloatForKey((prefix + "x").c_str(),
@@ -299,26 +298,7 @@ void PlayerDataManager::clearBuildingData() { buildingDatas_.clear(); }
 
 void PDM::loadData() {
   // 从本地存储重新加载数据（复用initData中的读取逻辑）
-  setGoldLimit();
-  setGold(userDefault_->getIntegerForKey(kKeyGold.c_str(), gold_));
-
-  setElixirLimit();
-  setElixir(userDefault_->getIntegerForKey(kKeyElixir.c_str(), elixir_));
-
-  setBuilderLimit();
-  setBuilder(userDefault_->getIntegerForKey(kKeyBuilder.c_str(), builder_));
-
-  setGoldGrowthRate(userDefault_->getIntegerForKey(kKeyGoldGrowthRate.c_str(),
-                                                   gold_growth_rate));
-  setElixirGrowthRate(userDefault_->getIntegerForKey(
-      kKeyElixirGrowthRate.c_str(), elixir_growth_rate));
-  setBuilderGrowthRate(userDefault_->getIntegerForKey(
-      kKeyBuilderGrowthRate.c_str(), builder_growth_rate));
-
-  std::string timeStr = userDefault_->getStringForKey(
-      kKeyLastRecordTime.c_str(), std::to_string(lastRecordTime_));
-  lastRecordTime_ = std::stoll(timeStr);
-
+  // 先加载建筑
   buildingDatas_.clear();
   int buildingCount = userDefault_->getIntegerForKey("buildingCount", 0);
 
@@ -336,6 +316,48 @@ void PDM::loadData() {
 
     buildingDatas_.push_back(data);
   }
+
+  // 加载当前的资源数值，但不要在这里触发基于建筑列表的 Limit 更新
+
+  this->gold_limit_ = 100;
+  for (const auto& data : buildingDatas_) {
+    if (data.buildingType == BuildingType::STORAGE &&
+        data.resourceType == ResourceType::GOLD) {
+      // 使用与建筑类内部一致的计算公式：容量 = 1000 * 等级
+      this->gold_limit_ += (1000 * data.level);
+    }
+  }
+  this->elixir_limit_ = 100;
+  for (const auto& data : buildingDatas_) {
+    if (data.buildingType == BuildingType::STORAGE &&
+        data.resourceType == ResourceType::ELIXIR) {
+      // 使用与建筑类内部一致的计算公式：容量 = 1000 * 等级
+      this->elixir_limit_ += (1000 * data.level);
+    }
+  }
+  this->builder_limit_ = 100;
+  for (const auto& data : buildingDatas_) {
+    if (data.buildingType == BuildingType::STORAGE &&
+        data.resourceType == ResourceType::BUILDER) {
+      // 使用与建筑类内部一致的计算公式：容量 = 1000 * 等级
+      this->builder_limit_ += (1000 * data.level);
+    }
+  }
+  this->gold_ = userDefault_->getIntegerForKey(kKeyGold.c_str(), 0);
+  this->elixir_ = userDefault_->getIntegerForKey(kKeyGold.c_str(), 0);
+  this->builder_ = userDefault_->getIntegerForKey(kKeyBuilder.c_str(), 0);
+
+  setGoldGrowthRate(userDefault_->getIntegerForKey(kKeyGoldGrowthRate.c_str(),
+                                                   gold_growth_rate));
+  setElixirGrowthRate(userDefault_->getIntegerForKey(
+      kKeyElixirGrowthRate.c_str(), elixir_growth_rate));
+  setBuilderGrowthRate(userDefault_->getIntegerForKey(
+      kKeyBuilderGrowthRate.c_str(), builder_growth_rate));
+
+  std::string timeStr = userDefault_->getStringForKey(
+      kKeyLastRecordTime.c_str(), std::to_string(lastRecordTime_));
+  lastRecordTime_ = std::stoll(timeStr);
+
   CCLOG("手动加载玩家数据:\n金币:%d  圣水:%d  建筑工人:%d", gold_, elixir_,
         builder_);
 }
@@ -343,4 +365,9 @@ void PDM::loadData() {
 void PlayerDataManager::saveData() {
   syncAllDataToLocal();  // 复用已有的全量同步逻辑
   CCLOG("手动触发数据保存完成");
+}
+void PlayerDataManager::updateAllLimits() {
+  setGoldLimit();
+  setElixirLimit();
+  setBuilderLimit();
 }
