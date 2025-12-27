@@ -267,6 +267,11 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
   auto pdm = PlayerDataManager::getInstance();
   if (_currentType == PlacementType::BUILDING) {
     Building* newBuilding = nullptr;
+    if (pdm->getGold() < 500) {
+        CCLOG("金币不足，无法放置!");
+        return false;
+    }
+    pdm->setGold(pdm->getGold() - 500);
     if (_currentId == 1) {
       newBuilding = ResourceBuilding::create(
           "gold_mine_icon_01.png", "金矿", CampType::PLAYER, 1, 3, 100, 60, 600,
@@ -328,6 +333,11 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
     Vec2 placePos = tileToWorldCenter(tileX, tileY);
     CCLOG(">>> Try place soldier, type=%d", _currentId);
     Soldier* soldier = nullptr;
+    if (pdm->getElixir() < 400) {
+        CCLOG("圣水不足，无法放置!");
+        return false;
+    }
+    pdm->setElixir(pdm->getElixir() - 400);
     if (_currentId == 1) {
       soldier = Rarbarian::create(50, 10, 50, 1);
     } else if (_currentId == 2) {
