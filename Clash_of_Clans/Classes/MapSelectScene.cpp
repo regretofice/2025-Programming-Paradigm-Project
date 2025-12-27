@@ -64,25 +64,25 @@ bool MapSelectScene::init() {
   this->addChild(map1Button, 1);
 
   // 地图1名称标签
-  auto map1Name =
-      Label::createWithSystemFont("沙漠地图", "Microsoft YaHei", 36);
-  map1Name->setPosition(
-      Vec2(visibleSize.width / 2 - 200, visibleSize.height / 2 - 100));
+  auto map1Name =Label::createWithSystemFont("沙漠地图", "Microsoft YaHei", 36);
+  map1Name->setPosition(Vec2(visibleSize.width / 2 - 200, visibleSize.height / 2 - 100));
+  auto map11Name =Label::createWithSystemFont("攻伐模式", "Microsoft YaHei", 24);
+  map11Name->setTextColor(Color4B::RED);
+  map11Name->setPosition(Vec2(visibleSize.width / 2 - 200, visibleSize.height / 2 ));
   this->addChild(map1Name, 1);
+  this->addChild(map11Name, 1);
 
   // 地图2选择按钮
   auto map2Button = ui::Button::create("preview2.png");
   if (!map2Button) {
     map2Button = ui::Button::create("button_normal.png");
-    auto map2Label =
-        Label::createWithSystemFont("地图2", "Microsoft YaHei", 36);
+    auto map2Label =Label::createWithSystemFont("地图2", "Microsoft YaHei", 36);
     map2Label->setPosition(map2Button->getContentSize() / 2);
     map2Button->addChild(map2Label);
   }
 
   map2Button->setScale(0.3f);
-  map2Button->setPosition(
-      Vec2(visibleSize.width / 2 + 200, visibleSize.height / 2 + 50));
+  map2Button->setPosition(Vec2(visibleSize.width / 2 + 200, visibleSize.height / 2 + 50));
   map2Button->addTouchEventListener(
       [&](Ref* sender, ui::Widget::TouchEventType type) {
         if (type == ui::Widget::TouchEventType::ENDED) {
@@ -92,11 +92,18 @@ bool MapSelectScene::init() {
   this->addChild(map2Button, 1);
 
   // 地图2名称标签
-  auto map2Name =
-      Label::createWithSystemFont("丛林地图", "Microsoft YaHei", 36);
-  map2Name->setPosition(
-      Vec2(visibleSize.width / 2 + 200, visibleSize.height / 2 - 100));
+  auto map2Name =Label::createWithSystemFont("丛林地图", "Microsoft YaHei", 36);
+  map2Name->setPosition( Vec2(visibleSize.width / 2 + 200, visibleSize.height / 2 - 100));
+  auto map22Name =Label::createWithSystemFont("建造模式", "Microsoft YaHei", 24);
+  map22Name->setPosition(Vec2(visibleSize.width / 2 + 200, visibleSize.height / 2));
+  map22Name->setTextColor(Color4B::GREEN);
+  auto map222Name =Label::createWithSystemFont("请先选本模式构建大本营", "Microsoft YaHei", 19);
+  map222Name->setPosition(Vec2(visibleSize.width / 2 + 195, visibleSize.height / 2 - 50));
   this->addChild(map2Name, 1);
+  this->addChild(map22Name, 1);
+  this->addChild(map222Name, 1);
+ 
+  
 
   // 返回按钮
   auto returnButton = ui::Button::create("return_button.png");
