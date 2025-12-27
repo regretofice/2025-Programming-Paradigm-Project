@@ -9,7 +9,7 @@ enum class CampType {
 
 // 建筑类型
 enum class BuildingType {
-  COMMON,    // 普通建筑（大本营、城墙等）
+  COMMON,    // 普通建筑（城墙等）
   DEFENSE,   // 防御建筑（箭塔、加农炮等）
   RESOURCE,  // 资源建筑（金矿、圣水收集器等）
   STORAGE    // 存储建筑（储金罐、圣水瓶等）

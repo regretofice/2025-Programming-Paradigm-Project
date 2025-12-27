@@ -42,15 +42,14 @@ AudioManager::~AudioManager()
 
 void AudioManager::preloadAllAudio()
 {
-    // 预加载默认音频文件
+    // 预加载实际使用的音频文件
     std::vector<std::string> audioFiles = {
-        DEFAULT_BGM,
-        DEFAULT_BUTTON,
-        DEFAULT_ATTACK,
-        DEFAULT_SELECT,
-        DEFAULT_GAME_START,
-        DEFAULT_GAME_OVER,
-        DEFAULT_VICTORY
+        "start_music.mp3",        
+        "combat_music.mp3",       
+        "home_music.mp3",         
+        "victory.mp3",            // 胜利音效
+        "defeat.mp3"              // 失败音效
+        // 可以根据需要添加更多音频文件
     };
 
     for (const auto& file : audioFiles)
@@ -59,10 +58,11 @@ void AudioManager::preloadAllAudio()
         if (FileUtils::getInstance()->isFileExist(file))
         {
             AudioEngine::preload(file);
+            CCLOG("Preloaded audio: %s", file.c_str());
         }
         else
         {
-            CCLOG("Audio file not found: %s", file.c_str());
+            CCLOG("WARNING: Audio file not found: %s", file.c_str());
         }
     }
 }
@@ -80,7 +80,7 @@ void AudioManager::playBackgroundMusic(const std::string& filePath, bool loop, f
     }
 
     // 设置要播放的文件路径
-    std::string path = filePath.empty() ? DEFAULT_BGM : filePath;
+    std::string path = filePath;
 
     // 播放背景音乐
     float actualVolume = volume * _bgmVolume * _masterVolume;
@@ -133,7 +133,7 @@ int AudioManager::playAttackSound(const std::string& filePath, float volume)
 {
     if (_isMuted) return -1;
 
-    std::string path = filePath.empty() ? DEFAULT_ATTACK : filePath;
+    std::string path = filePath;
     float actualVolume = volume * _effectVolume * _masterVolume;
 
     int soundId = playSoundInternal(path, false, actualVolume);
@@ -145,26 +145,6 @@ void AudioManager::stopAllAttackSounds()
     // 这里可以添加特定逻辑来停止攻击音效
     // 目前使用通用方法
     removeInactiveSounds();
-}
-
-void AudioManager::playButtonSound(float volume)
-{
-    if (_isMuted) return;
-
-    std::string path = DEFAULT_BUTTON;
-    float actualVolume = volume * _effectVolume * _masterVolume;
-
-    playSoundInternal(path, false, actualVolume);
-}
-
-void AudioManager::playSelectSound(float volume)
-{
-    if (_isMuted) return;
-
-    std::string path = DEFAULT_SELECT;
-    float actualVolume = volume * _effectVolume * _masterVolume;
-
-    playSoundInternal(path, false, actualVolume);
 }
 
 int AudioManager::playSoundEffect(const std::string& filePath, bool loop, float volume)
@@ -243,26 +223,6 @@ void AudioManager::setMasterVolume(float volume)
             AudioEngine::setVolume(soundId, actualVolume);
         }
     }
-}
-
-void AudioManager::playGameStartSound()
-{
-    if (_isMuted) return;
-
-    std::string path = DEFAULT_GAME_START;
-    float actualVolume = 0.8f * _effectVolume * _masterVolume;
-
-    playSoundInternal(path, false, actualVolume);
-}
-
-void AudioManager::playGameOverSound()
-{
-    if (_isMuted) return;
-
-    std::string path = DEFAULT_GAME_OVER;
-    float actualVolume = 0.8f * _effectVolume * _masterVolume;
-
-    playSoundInternal(path, false, actualVolume);
 }
 
 void AudioManager::playVictorySound()

@@ -35,7 +35,8 @@ public:
 	virtual void onEnter() override;
 	// 添加资源显示相关函数
 	void updateResourceDisplay();
-
+	void checkBaseCampStatus();
+	void gameOver(bool isVictory);
 private:
 	cocos2d::TMXTiledMap* _tileMap;
 	std::string _mapFileName;  // 存储地图文件名
@@ -53,6 +54,12 @@ private:
 	bool isPlacingSoldier;              // 是否处于放置士兵模式
 	bool _isUpgradeMode = false;        // 是否处于升级模式
 	SoldierType currentSoldierType;     // 当前要放置的士兵类型
+
+	bool _isMap1 = false;           
+	int _countdown = 60;            // 倒计时秒数
+	cocos2d::Label* _timerLabel;    // 计时器标签
+	bool _isGameOver = false;       // 游戏是否结束
+	int64_t _startTimeMs = 0;       // 计时开始时间
 
 	// 添加资源显示相关成员变量
 	cocos2d::Label* _goldLabel;

@@ -33,9 +33,6 @@ public:
     int playAttackSound(const std::string& filePath = "", float volume = 0.7f);
     void stopAllAttackSounds();
     
-    // UI音效控制
-    void playButtonSound(float volume = 0.8f);
-    void playSelectSound(float volume = 0.8f);
     
     // 通用音效控制
     int playSoundEffect(const std::string& filePath, bool loop = false, float volume = 0.8f);
@@ -80,21 +77,16 @@ private:
     
     // 音量设置
     float _masterVolume;     // 主音量 (0.0 - 1.0)
-    float _bgmVolume;        // 背景音乐音量 (相对于主音量)
-    float _effectVolume;     // 音效音量 (相对于主音量)
+    float _bgmVolume;        // 背景音乐音量
+    float _effectVolume;     // 音效音量 
     
     // 状态
     bool _isMuted;
-    bool _isBackgroundMusicLoaded;
-    
+    bool _isBackgroundMusicLoaded;  
+
     // 默认音频文件路径
-    const std::string DEFAULT_BGM = "audio/start_bgm.mp3";
-    const std::string DEFAULT_BUTTON = "audio/button_click.mp3";
-    const std::string DEFAULT_ATTACK = "audio/attack_sound.mp3";
-    const std::string DEFAULT_SELECT = "audio/select_sound.mp3";
-    const std::string DEFAULT_GAME_START = "audio/game_start.mp3";
-    const std::string DEFAULT_GAME_OVER = "audio/game_over.mp3";
-    const std::string DEFAULT_VICTORY = "audio/victory.mp3";
+    const std::string DEFAULT_BGM = "start_music.mp3";
+    const std::string DEFAULT_VICTORY = "victory.mp3";
 };
 
 #endif // __AUDIO_MANAGER_H__
