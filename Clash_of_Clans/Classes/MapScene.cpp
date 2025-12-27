@@ -117,9 +117,10 @@ bool MapScene::init() {
         if (type == ui::Widget::TouchEventType::ENDED) {
           // 离开场景时停止背景音乐
           AudioManager::getInstance()->stopBackgroundMusic();
-          Scene::onExit();
-          // 保存建筑位置
           saveBuildingsPosition();
+          Scene::onExit();
+          PlacementManager::getInstance()->clearAll();
+          BuildingManager::destroyInstance();
           menuReturnCallback(sender);
         }
       });
@@ -402,10 +403,8 @@ void MapScene::createPlacementMenu() {
     _isUpgradeMode = !_isUpgradeMode;  // 切换状态
     // 视觉反馈：开启时变色，关闭时恢复
     if (_isUpgradeMode) {
-      ((ui::Button*)sender)->setColor(Color3B::YELLOW);
       CCLOG("升级模式：开启（请点击地图上的建筑进行升级）");
     } else {
-      ((ui::Button*)sender)->setColor(Color3B::WHITE);
       CCLOG("升级模式：关闭");
     }
   });
