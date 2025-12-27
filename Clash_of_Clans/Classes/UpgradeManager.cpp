@@ -17,7 +17,8 @@ std::string UpgradeManager::getUpgradeTexture(Building* building) {
   // 已经升级了
   if (building->getType() == BuildingType::RESOURCE) {
     auto subBuilding = dynamic_cast<ResourceBuilding*>(building);
-
+    subBuilding->setMaxCapacity(subBuilding->getMaxCapacity() + 100);
+    subBuilding->setProductionPerSec(subBuilding->getProductionPerSec() + 5);
     if (subBuilding->getResType() == ResourceType::GOLD) {
       return "gold_mine_icon_0" + std::to_string(subBuilding->getLevel()) +
              ".png";
@@ -29,7 +30,7 @@ std::string UpgradeManager::getUpgradeTexture(Building* building) {
     }
   } else if (building->getType() == BuildingType::DEFENSE) {
     auto subBuilding = dynamic_cast<DefenseBuilding*>(building);
-
+    subBuilding->setDPS(subBuilding->getDPS() + 5);
     if (subBuilding->getTargetType() == TargetType::AIR_ONLY) {
       return "firecrackers_0" + std::to_string(subBuilding->getLevel()) +
              ".png";
@@ -41,7 +42,7 @@ std::string UpgradeManager::getUpgradeTexture(Building* building) {
 
   } else if (building->getType() == BuildingType::STORAGE) {
     auto subBuilding = dynamic_cast<ResourceStorageBuilding*>(building);
-
+    subBuilding->setMaxStorageCapacity(subBuilding->getMaxStorageCapacity() + 400);
     if (subBuilding->getResType() == ResourceType::GOLD) {
       return "Gold_Storage_0" + std::to_string(subBuilding->getLevel()) +
              ".png";
@@ -68,13 +69,9 @@ bool UpgradeManager::tryUpgradeBuilding(Building* building) {
     // 1. 扣除资源
     pdm->setGold(pdm->getGold() - cost);
 
-    // 2. 提升等级与属性
-    // 主属性
-
+    // 2.增加血量上限
     building->setMaxHp(building->getMaxHp() + 100);
     building->setHp(building->getMaxHp());  // 升级后血量回满
-    // 副属性
-    // todo:在这里填数值变动或者在getUpgradeTexture一起改动数值
 
     // 3. 更换贴图
     std::string newTex = getUpgradeTexture(building);

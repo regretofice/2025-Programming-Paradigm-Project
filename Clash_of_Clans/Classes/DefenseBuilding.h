@@ -47,10 +47,11 @@ class DefenseBuilding : public Building {
   // 调度器key（唯一标识，用于精准取消）
   const std::string AttackCDSchedulerKey = "attackCD";
 
-  // Getter
+  // Getter / Setter
   int getDPS() const { return _dps; }
   float getAttackRange() const { return _attackRange; }
   TargetType getTargetType() const { return _targetType; }
+  void setDPS(int newDPS) { _dps = newDPS; }
 
   virtual ~DefenseBuilding();
 };

@@ -31,10 +31,13 @@ class ResourceBuilding : public Building {
   int collectResource();                   // 收集资源（返回收集量）
   virtual void update(float dt) override;  // 重写更新逻辑
 
-  // Getter
+  // Getter / Setter
   int getCurrentResource() const { return _currentRes; }
   ResourceType getResType() const { return _resType; }
   int getMaxCapacity() const { return _maxCapacity; }
+  int getProductionPerSec() const { return _productionPerSec; }
+  void setMaxCapacity(int newMaxCapacity) { _maxCapacity = newMaxCapacity; }
+  void setProductionPerSec(int newProductionPerSec) { _productionPerSec = newProductionPerSec; }
 
   virtual ~ResourceBuilding();
 };

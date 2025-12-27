@@ -39,6 +39,7 @@ public:
     int getCurrentStored() const { return _currentStored; }
     int getMaxStorageCapacity() const { return _maxStorageCapacity; }
     ResourceType getResType() const { return _resType; }
+    void setMaxStorageCapacity(int newMaxStorageCapacity) { _maxStorageCapacity = newMaxStorageCapacity; }
 
     // Îö¹¹º¯Êý
     virtual ~ResourceStorageBuilding();

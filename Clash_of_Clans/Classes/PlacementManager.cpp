@@ -269,39 +269,39 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
     Building* newBuilding = nullptr;
     if (_currentId == 1) {
       newBuilding = ResourceBuilding::create(
-          "gold_mine_icon_01.png", "金矿", CampType::PLAYER, 1, 3, 100, 60, 100,
+          "gold_mine_icon_01.png", "金矿", CampType::PLAYER, 1, 3, 100, 60, 600,
           5.0f, ResourceType::GOLD, 10, 50);
       pdm->setGoldGrowthRate(pdm->getGoldGrowthRate() + 10);
     } else if (_currentId == 2) {
       newBuilding = DefenseBuilding::create(
-          "tower_icon_01.png", "防御塔", CampType::PLAYER, 1, 3, 200, 50, 150,
+          "tower_icon_01.png", "防御塔", CampType::PLAYER, 1, 3, 200, 50, 800,
           8.0f, 10, 200, AttackType::SINGLE_TARGET, 2.0f);
     } else if (_currentId == 3) {
       newBuilding = ResourceBuilding::create(
-          "base_camp_01.png", "大本营", CampType::PLAYER, 1, 3, 200, 50, 150,
+          "base_camp_01.png", "大本营", CampType::PLAYER, 1, 3, 200, 50, 1500,
           8.0f, ResourceType::BUILDER, 0, 0);
     } else if (_currentId == 4) {
       newBuilding = ResourceBuilding::create(
           "elixir_collector_icon_01.png", "圣水收集器", CampType::PLAYER, 1, 3,
-          100, 60, 100, 5.0f, ResourceType::ELIXIR, 10, 50);
+          100, 60, 600, 5.0f, ResourceType::ELIXIR, 10, 50);
       pdm->setElixirGrowthRate(pdm->getElixirGrowthRate() + 10);
     } else if (_currentId == 5) {
       newBuilding = DefenseBuilding::create(
-          "cannon_01.png", "加农炮", CampType::PLAYER, 1, 3, 200, 50, 150, 8.0f,
+          "cannon_01.png", "加农炮", CampType::PLAYER, 1, 3, 200, 50, 800, 8.0f,
           10, 220, AttackType::SINGLE_TARGET, 2.0f, TargetType::GROUND_ONLY);
     } else if (_currentId == 6) {
       newBuilding = ResourceStorageBuilding::create(
-          "Gold_Storage_01.png", "储金罐", CampType::PLAYER, 1, 3, 400, 50, 100,
+          "Gold_Storage_01.png", "储金罐", CampType::PLAYER, 1, 3, 400, 50, 700,
           5.0f, ResourceType::GOLD, 1000, 0.5f);
       pdm->setGoldLimit();
     } else if (_currentId == 7) {
       newBuilding = ResourceStorageBuilding::create(
           "Elixir_Storage_01.png", "圣水瓶", CampType::PLAYER, 1, 3, 400, 50,
-          100, 5.0f, ResourceType::ELIXIR, 1000, 0.5f);
+          700, 5.0f, ResourceType::ELIXIR, 1000, 0.5f);
       pdm->setElixirLimit();
     } else if (_currentId == 8) {
       newBuilding = DefenseBuilding::create(
-            "firecrackers_01.png", "防空火箭", CampType::PLAYER, 1, 3, 200, 50, 150, 8.0f,
+            "firecrackers_01.png", "防空火箭", CampType::PLAYER, 1, 3, 200, 50, 800, 8.0f,
             10, 200, AttackType::SINGLE_TARGET, 2.0f, TargetType::AIR_ONLY);
     }
     if (newBuilding) {
