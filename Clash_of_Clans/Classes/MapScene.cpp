@@ -17,6 +17,33 @@
 
 USING_NS_CC;
 
+void MapScene::handleSceneExit() {
+    // 1. 停止背景音乐
+    if (AudioManager::getInstance()) {
+        AudioManager::getInstance()->stopBackgroundMusic();
+    }
+    // 2. 保存建筑位置
+    saveBuildingsPosition();
+    // 3. 清理放置管理器
+    if (PlacementManager::getInstance()) {
+        PlacementManager::getInstance()->clearAll();
+    }
+
+    // 4. 销毁建筑管理器单例
+    if (BuildingManager::getInstance()) { 
+        BuildingManager::destroyInstance();
+    }
+
+    // 5. 取消所有未完成的调度
+    this->unscheduleAllCallbacks();
+
+    // 6. 切换场景
+    auto director = Director::getInstance();
+    if (director && !director->isPaused()) {
+        director->replaceScene(TransitionFade::create(0.5f, StartScene::createScene()));
+    }
+}
+
 Scene* MapScene::createScene() {
     auto userDefault = UserDefault::getInstance();
     std::string mapFile =
@@ -47,7 +74,7 @@ void MapScene::createMap() {
     }
 
     // 加载TMX地图文件
-    _tileMap = TMXTiledMap::create(_mapFileName);
+    auto _tileMap = TMXTiledMap::create(_mapFileName);
 
     // 获取地图信息
     _mapWidth = static_cast<int>(_tileMap->getMapSize().width);
@@ -72,9 +99,9 @@ void MapScene::createMap() {
         _mapOffsetX, _mapOffsetY, 2.0f);
 }
 
+// 调用通用退出函数
 void MapScene::menuReturnCallback(Ref* pSender) {
-    Director::getInstance()->replaceScene(
-        TransitionFade::create(0.5f, StartScene::createScene()));
+    handleSceneExit();
 }
 
 bool MapScene::init() {
@@ -117,13 +144,8 @@ bool MapScene::init() {
     returnButton->addTouchEventListener(
         [this](Ref* sender, ui::Widget::TouchEventType type) {
             if (type == ui::Widget::TouchEventType::ENDED) {
-                // 离开场景时停止背景音乐
-                AudioManager::getInstance()->stopBackgroundMusic();
-                saveBuildingsPosition();
-                Scene::onExit();
-                PlacementManager::getInstance()->clearAll();
-                BuildingManager::destroyInstance();
-                menuReturnCallback(sender);
+                // 直接调用通用退出函数
+                handleSceneExit();
             }
         });
     this->addChild(returnButton, 100);
@@ -562,36 +584,46 @@ void MapScene::onSoldierButtonClicked(Ref* sender, int soldierType) {
     pm->createPreviewSprite(0, soldierType, this);
     CCLOG("Soldier button clicked: %d", soldierType);
 }
+
 // 检查大本营状态
 void MapScene::checkBaseCampStatus()
 {
-    // 安全检查：游戏已结束则直接返回
+    // 游戏已结束则直接返回
     if (_isGameOver) return;
-    bool isBaseCampDestroyed = true;
+    bool hasAliveBaseCamp = false;
     auto buildings = BuildingManager::getInstance()->getAllBuildings();
+    // 输出当前建筑总数
+    CCLOG("当前建筑总数：%zu", buildings.size());
+    // 遍历所有建筑，查找未被摧毁的大本营
     for (auto building : buildings) {
         // 空指针保护
-        if (!building) continue;
-        if (building->getType() == BuildingType::STORAGE)
-        {
+        if (!building) {
+            CCLOG("发现空建筑指针，跳过");
+            continue;
+        }
+        // 检查是否是大本营
+        if (building->getType() == BuildingType::STORAGE) {
             auto storage = dynamic_cast<ResourceStorageBuilding*>(building);
+            // 确认转换成功且是大本营类型
             if (storage && storage->getResType() == ResourceType::BUILDER) {
-                // 如果大本营未被摧毁，更新状态
+                CCLOG("找到大本营，是否被摧毁：%s", building->isDestroyed() ? "是" : "否");
                 if (!building->isDestroyed()) {
-                    isBaseCampDestroyed = false;
-                    break; // 找到未被摧毁的大本营，无需继续遍历
+                    hasAliveBaseCamp = true;
+                    break; // 找到存活的大本营
                 }
             }
         }
-        if (isBaseCampDestroyed)
-        {
-            gameOver(true);  // 大本营被摧毁，胜利
-            CCLOG("大本营被摧毁，判定胜利！");
-        }
+    }
+    if (!hasAliveBaseCamp) {
+        gameOver(true);
+        CCLOG("所有大本营都被摧毁，判定胜利！");
+    }
+    else {
+        CCLOG("仍有存活的大本营，不触发胜利");
     }
 }
 
-// 游戏结束处理
+// gameOver函数
 void MapScene::gameOver(bool isVictory) {
     if (_isGameOver) return;
 
@@ -599,29 +631,21 @@ void MapScene::gameOver(bool isVictory) {
     _timerLabel->setColor(isVictory ? Color3B::GREEN : Color3B::RED);
 
     // 显示结果
-    auto resultLabel = Label::createWithTTF(
-        isVictory ? "胜利!" : "失败!",
-        "fonts/arial.ttf",
-        48
-    );
+    auto resultLabel = Label::createWithSystemFont(isVictory ? "胜利!" : "失败!", "SimHei", 60);
     resultLabel->setColor(isVictory ? Color3B::GREEN : Color3B::RED);
     resultLabel->enableOutline(Color4B::BLACK, 2);
     auto visibleSize = Director::getInstance()->getVisibleSize();
-    resultLabel->setPosition(Vec2(visibleSize.width / 2, visibleSize.height / 2));
+    Vec2 origin = Director::getInstance()->getVisibleOrigin();
+    resultLabel->setPosition(Vec2(origin.x + visibleSize.width / 2, origin.y + visibleSize.height / 2));
     this->addChild(resultLabel, 200);
 
-    // 3秒后返回开始场景
+    // 3秒后调用通用退出函数
     this->scheduleOnce([this](float dt) {
-        // 离开场景时的清理工作
-        AudioManager::getInstance()->stopBackgroundMusic();
-        saveBuildingsPosition();
-        PlacementManager::getInstance()->clearAll();
-        BuildingManager::destroyInstance();
-        menuReturnCallback(nullptr);
+        handleSceneExit();
         }, 3.0f, "gameOverDelay");
 }
 
-// 触摸开始事件 - 放置建筑或士兵
+// 触摸开始事件
 bool MapScene::onTouchBegan(Touch* touch, Event* event) {
     // 交给PlacementManager处理开始触摸
     if (_isUpgradeMode) {
@@ -641,7 +665,7 @@ bool MapScene::onTouchBegan(Touch* touch, Event* event) {
     return true;
 }
 
-// 触摸移动事件 - 更新预览图位置
+// 触摸移动事件
 void MapScene::onTouchMoved(Touch* touch, Event* event) {
     PlacementManager::getInstance()->onTouchMoved(touch, event, this);
 }
@@ -864,6 +888,7 @@ void MapScene::consumeResource(SoldierType type) {
     }
 }
 
+// onEnter
 void MapScene::onEnter() {
     Scene::onEnter();
     // 根据地图文件名播放不同的背景音乐

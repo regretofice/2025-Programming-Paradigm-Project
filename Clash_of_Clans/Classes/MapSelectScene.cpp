@@ -69,8 +69,11 @@ bool MapSelectScene::init() {
   auto map11Name =Label::createWithSystemFont("攻伐模式", "Microsoft YaHei", 24);
   map11Name->setTextColor(Color4B::RED);
   map11Name->setPosition(Vec2(visibleSize.width / 2 - 200, visibleSize.height / 2 ));
+  auto map111Name = Label::createWithSystemFont("在规定时间内击毁大本营", "Microsoft YaHei", 19);
+  map111Name->setPosition(Vec2(visibleSize.width / 2 - 205, visibleSize.height / 2 - 50));
   this->addChild(map1Name, 1);
   this->addChild(map11Name, 1);
+  this->addChild(map111Name, 1);
 
   // 地图2选择按钮
   auto map2Button = ui::Button::create("preview2.png");

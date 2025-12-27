@@ -282,7 +282,7 @@ bool PlacementManager::onTouchBegan(Touch* touch, Event* event,
           "tower_icon_01.png", "防御塔", CampType::PLAYER, 1, 3, 200, 50, 800,
           8.0f, 10, 200, AttackType::SINGLE_TARGET, 2.0f);
     } else if (_currentId == 3) {
-      newBuilding = ResourceBuilding::create(
+      newBuilding = ResourceStorageBuilding::create(
           "base_camp_01.png", "大本营", CampType::PLAYER, 1, 3, 200, 50, 1500,
           8.0f, ResourceType::BUILDER, 0, 0);
     } else if (_currentId == 4) {

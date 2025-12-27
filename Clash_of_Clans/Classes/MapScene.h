@@ -37,6 +37,7 @@ public:
 	void updateResourceDisplay();
 	void checkBaseCampStatus();
 	void gameOver(bool isVictory);
+	void handleSceneExit();
 private:
 	cocos2d::TMXTiledMap* _tileMap;
 	std::string _mapFileName;  // 存储地图文件名
