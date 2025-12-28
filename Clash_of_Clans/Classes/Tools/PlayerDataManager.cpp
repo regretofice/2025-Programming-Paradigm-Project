@@ -334,6 +334,8 @@ void PDM::loadData() {
         userDefault_->getIntegerForKey((prefix + "BuildingType").c_str(), 0));
     data.resourceType = static_cast<ResourceType>(
         userDefault_->getIntegerForKey((prefix + "ResourceType").c_str(), 0));
+    data.targetType = static_cast<TargetType>(
+        userDefault_->getIntegerForKey((prefix + "targetType").c_str(), 0));
     data.positionX = userDefault_->getFloatForKey((prefix + "x").c_str(), 0);
     data.positionY = userDefault_->getFloatForKey((prefix + "y").c_str(), 0);
     data.level = userDefault_->getIntegerForKey((prefix + "level").c_str(), 1);
@@ -368,9 +370,9 @@ void PDM::loadData() {
       this->builder_limit_ += (1000 * data.level);
     }
   }
-  this->gold_ = userDefault_->getIntegerForKey(kKeyGold.c_str(), 0);
-  this->elixir_ = userDefault_->getIntegerForKey(kKeyGold.c_str(), 0);
-  this->builder_ = userDefault_->getIntegerForKey(kKeyBuilder.c_str(), 0);
+  this->gold_ = userDefault_->getIntegerForKey(kKeyGold.c_str(), 1000);
+  this->elixir_ = userDefault_->getIntegerForKey(kKeyGold.c_str(), 1000);
+  this->builder_ = userDefault_->getIntegerForKey(kKeyBuilder.c_str(), 1000);
 
   setGoldGrowthRate(userDefault_->getIntegerForKey(kKeyGoldGrowthRate.c_str(),
                                                    gold_growth_rate));
