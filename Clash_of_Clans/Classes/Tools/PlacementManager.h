@@ -45,6 +45,8 @@ class PlacementManager {
   // 清空整个PlacementManager单例
   void clearAll();
 
+  void occupyGrid(int baseX, int baseY, int sizeInTiles);
+
   cocos2d::Vec2 worldToTile(const cocos2d::Vec2& worldPos) const;
   cocos2d::Vec2 tileToWorldCenter(float tileX, float tileY) const;
 
@@ -79,7 +81,6 @@ class PlacementManager {
   // 内部工具函数
 
   bool canPlaceAt(int baseX, int baseY, int sizeInTiles) const;
-  void occupyGrid(int baseX, int baseY, int sizeInTiles);
 
   void removePreview(cocos2d::Node* parentScene);
 };

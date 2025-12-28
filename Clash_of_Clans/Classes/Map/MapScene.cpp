@@ -829,6 +829,15 @@ void MapScene::loadSavedBuildings() {
     if (building) {
       building->setPosition(Vec2(data.positionX, data.positionY));
       this->addChild(building, 5);
+      // 获取建筑占据的格子坐标
+      auto pm = PlacementManager::getInstance();
+      Vec2 tilePos = pm->worldToTile(building->getPosition());
+      int bx =
+          static_cast<int>(tilePos.x - 1);  // 假设 2x2 建筑，中心点转左下角
+      int by = static_cast<int>(tilePos.y - 1);
+
+      // 强制标记网格占用
+      pm->occupyGrid(bx, by, 2);
       building->showHpBar(true);  // 加载建筑时也显示血条
     }
   }
