@@ -19,11 +19,6 @@
 USING_NS_CC;
 
 void MapScene::handleSceneExit(Ref* pSender) {
-  // 1. 立即停止当前场景所有逻辑和调度，防止过渡动画期间报错
-  this->pause();
-  this->unscheduleUpdate();
-  this->getEventDispatcher()->removeEventListenersForTarget(
-      this);  // 停止监听，防止二次点击
   // 2. 停止背景音乐
   if (AudioManager::getInstance()) {
     AudioManager::getInstance()->stopBackgroundMusic();
@@ -43,6 +38,11 @@ void MapScene::handleSceneExit(Ref* pSender) {
   // 6. 取消所有未完成的调度
   this->unscheduleAllCallbacks();
 
+  // 1. 立即停止当前场景所有逻辑和调度，防止过渡动画期间报错
+  this->pause();
+  this->unscheduleUpdate();
+  this->getEventDispatcher()->removeEventListenersForTarget(
+      this);  // 停止监听，防止二次点击
   // 7. 切换场景
   auto director = Director::getInstance();
   if (director && !director->isPaused()) {
@@ -509,7 +509,7 @@ void MapScene::createPlacementMenu() {
 
   // 升级选项
   auto upgradeBtn = ui::Button::create("upgrade_icon.png");
-  upgradeBtn->setPosition(Vec2(60, startY - 580));
+  upgradeBtn->setPosition(Vec2(60, startY - 700));
   upgradeBtn->setScale(0.8f);
 
   upgradeBtn->addClickEventListener([this](Ref* sender) {
@@ -745,6 +745,9 @@ void MapScene::saveBuildingsPosition() {
         auto resourceStorageBuilding =
             dynamic_cast<ResourceStorageBuilding*>(building);
         data.resourceType = resourceStorageBuilding->getResType();
+      } else if (data.buildingType == BuildingType::DEFENSE) {
+        auto defenseBuilding = dynamic_cast<DefenseBuilding*>(building);
+        data.targetType = defenseBuilding->getTargetType();
       } else {
         data.resourceType = ResourceType::NORESOURCE;
       }
