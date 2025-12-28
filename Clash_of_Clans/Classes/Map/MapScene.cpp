@@ -19,7 +19,6 @@
 USING_NS_CC;
 
 void MapScene::handleSceneExit(Ref* pSender) {
- 
   // 2. 停止背景音乐
   if (AudioManager::getInstance()) {
     AudioManager::getInstance()->stopBackgroundMusic();
@@ -38,11 +37,13 @@ void MapScene::handleSceneExit(Ref* pSender) {
 
   // 6. 取消所有未完成的调度
   this->unscheduleAllCallbacks();
+
   // 1. 立即停止当前场景所有逻辑和调度，防止过渡动画期间报错
   this->pause();
   this->unscheduleUpdate();
   this->getEventDispatcher()->removeEventListenersForTarget(
       this);  // 停止监听，防止二次点击
+
   // 7. 切换场景
   auto director = Director::getInstance();
   if (director && !director->isPaused()) {
@@ -509,7 +510,7 @@ void MapScene::createPlacementMenu() {
 
   // 升级选项
   auto upgradeBtn = ui::Button::create("upgrade_icon.png");
-  upgradeBtn->setPosition(Vec2(60, startY - 580));
+  upgradeBtn->setPosition(Vec2(60, startY - 700));
   upgradeBtn->setScale(0.8f);
 
   upgradeBtn->addClickEventListener([this](Ref* sender) {
@@ -637,8 +638,9 @@ void MapScene::gameOver(bool isVictory) {
   _timerLabel->setColor(isVictory ? Color3B::GREEN : Color3B::RED);
 
   // 显示结果
-  auto resultLabel =
-      Label::createWithSystemFont(isVictory ? "胜利!  三秒后退出游戏" : "失败!  三秒后退出游戏", "SimHei", 60);
+  auto resultLabel = Label::createWithSystemFont(
+      isVictory ? "胜利!  三秒后退出游戏" : "失败!  三秒后退出游戏", "SimHei",
+      60);
   resultLabel->setColor(isVictory ? Color3B::GREEN : Color3B::RED);
   resultLabel->enableOutline(Color4B::BLACK, 2);
   auto visibleSize = Director::getInstance()->getVisibleSize();
@@ -648,12 +650,14 @@ void MapScene::gameOver(bool isVictory) {
   this->addChild(resultLabel, 200);
 
   // 3秒后直接退出程序
-  this->scheduleOnce([](float dt) {
-      Director::getInstance()->end();  // 退出Cocos2d-x
+  this->scheduleOnce(
+      [](float dt) {
+        Director::getInstance()->end();  // 退出Cocos2d-x
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)
-      exit(0);
+        exit(0);
 #endif
-      }, 3.0f, "gameOverDelay");
+      },
+      3.0f, "gameOverDelay");
 }
 
 // 触摸开始事件
@@ -749,6 +753,9 @@ void MapScene::saveBuildingsPosition() {
         auto resourceStorageBuilding =
             dynamic_cast<ResourceStorageBuilding*>(building);
         data.resourceType = resourceStorageBuilding->getResType();
+      } else if (data.buildingType == BuildingType::DEFENSE) {
+        auto defenseBuilding = dynamic_cast<DefenseBuilding*>(building);
+        data.targetType = defenseBuilding->getTargetType();
       } else {
         data.resourceType = ResourceType::NORESOURCE;
       }
